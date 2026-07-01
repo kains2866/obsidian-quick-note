@@ -9,6 +9,7 @@ import {
 } from 'vitest';
 import { DEFAULT_SETTINGS, DEFAULT_DRAFT, STORAGE_KEYS } from '../../src/shared/constants.js';
 import { formatFrontmatterDate } from '../../src/shared/templates.js';
+import { t } from '../../src/shared/i18n.js';
 import type { ExtensionSettings, Draft, PageInfo } from '../../src/shared/types.js';
 
 type PopupModule = typeof import('../../src/popup/popup.js');
@@ -214,7 +215,7 @@ describe('popup', () => {
       await init();
 
       const targetPath = document.getElementById('target-path') as HTMLDivElement;
-      expect(targetPath.textContent).toContain('保存到：');
+      expect(targetPath.textContent).toContain(t('saveToPrefix'));
     });
 
     it('prefills editor with selected text when draft content is empty', async () => {
@@ -253,7 +254,7 @@ describe('popup', () => {
       await handleSave();
 
       const status = document.getElementById('status') as HTMLDivElement;
-      expect(status.textContent).toBe('请先填写 Obsidian 仓库名（打开设置）');
+      expect(status.textContent).toBe(t('pleaseSetVaultName'));
       expect(status.className).toBe('error');
     });
 
@@ -270,9 +271,9 @@ describe('popup', () => {
       editor.value = '';
       await handleSave();
 
-      expect(confirmSpy).toHaveBeenCalledWith('编辑器为空，确定要保存空笔记吗？');
+      expect(confirmSpy).toHaveBeenCalledWith(t('confirmSaveEmptyNote'));
       expect(sendMessage).not.toHaveBeenCalled();
-      expect(document.getElementById('status')?.textContent).toBe('已取消保存');
+      expect(document.getElementById('status')?.textContent).toBe(t('saveCancelled'));
       confirmSpy.mockRestore();
     });
 
@@ -320,7 +321,7 @@ describe('popup', () => {
       expect(openMessage.url).toContain('vault=MyVault');
 
       const status = document.getElementById('status') as HTMLDivElement;
-      expect(status.textContent).toBe('已保存到 Obsidian');
+      expect(status.textContent).toBe(t('savedToObsidian'));
       expect(status.className).toBe('success');
       expect(chrome.storage.local.remove).toHaveBeenCalledWith(STORAGE_KEYS.draft);
     });
@@ -361,7 +362,7 @@ describe('popup', () => {
       expect(openMessage.url).toContain('content=');
 
       const status = document.getElementById('status') as HTMLDivElement;
-      expect(status.textContent).toBe('已保存到 Obsidian');
+      expect(status.textContent).toBe(t('savedToObsidian'));
     });
 
     it('shows an error and triggers DOWNLOAD_NOTE fallback on failure', async () => {
@@ -389,7 +390,7 @@ describe('popup', () => {
       await handleSave();
 
       const status = document.getElementById('status') as HTMLDivElement;
-      expect(status.textContent).toBe('保存失败：Cannot update tab，已下载兜底文件');
+      expect(status.textContent).toBe(t('saveFailedDownloaded', { error: 'Cannot update tab' }));
       expect(status.className).toBe('error');
 
       const downloadCall = sendMessage.mock.calls.find(
@@ -417,7 +418,7 @@ describe('popup', () => {
       await handleSave();
 
       const status = document.getElementById('status') as HTMLDivElement;
-      expect(status.textContent).toBe('保存失败：无法获取当前标签页，已下载兜底文件');
+      expect(status.textContent).toBe(t('saveFailedDownloaded', { error: t('cannotGetCurrentTab') }));
 
       const downloadCall = sendMessage.mock.calls.find(
         (call) => (call[0] as { type: string }).type === 'DOWNLOAD_NOTE',
@@ -452,7 +453,9 @@ describe('popup', () => {
       await handleSave();
 
       const status = document.getElementById('status') as HTMLDivElement;
-      expect(status.textContent).toBe('保存失败：Obsidian rejected；兜底下载也失败：download denied');
+      expect(status.textContent).toBe(
+        t('saveFailedDownloadFailed', { error: 'Obsidian rejected', downloadError: 'download denied' }),
+      );
       expect(status.className).toBe('error');
     });
   });
@@ -598,7 +601,7 @@ describe('popup', () => {
       const { init } = await loadPopup({ storedSettings });
       await init();
       const summary = document.getElementById('frontmatter-summary') as HTMLSpanElement;
-      expect(summary.textContent).toBe('无');
+      expect(summary.textContent).toBe(t('none'));
     });
 
     it('initializes checkbox states from stored frontmatterOverrides', async () => {

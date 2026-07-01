@@ -7,18 +7,18 @@
 </head>
 <body>
   <div class="popup">
-    <div class="target-path" id="target-path">保存到：...</div>
+    <div class="target-path" id="target-path" data-i18n="saveToPrefix">保存到：</div>
     <div class="target-edit" id="target-edit">
-      <label>文件夹 <input type="text" id="target-folder-input" placeholder="覆盖文件夹" /></label>
-      <label>文件名 <input type="text" id="target-filename-input" placeholder="覆盖文件名" /></label>
+      <label><span data-i18n="folderLabel">文件夹</span> <input type="text" id="target-folder-input" data-i18n-placeholder="folderPlaceholder" placeholder="覆盖文件夹" /></label>
+      <label><span data-i18n="filenameLabel">文件名</span> <input type="text" id="target-filename-input" data-i18n-placeholder="filenamePlaceholder" placeholder="覆盖文件名" /></label>
       <div class="target-edit-actions">
-        <button id="target-edit-save" type="button">保存</button>
-        <button id="target-edit-cancel" type="button">取消</button>
+        <button id="target-edit-save" type="button" data-i18n="save">保存</button>
+        <button id="target-edit-cancel" type="button" data-i18n="cancel">取消</button>
       </div>
     </div>
     <div class="toggles">
-      <label><input type="checkbox" id="toggle-url" /> URL</label>
-      <label><input type="checkbox" id="toggle-title" /> 标题</label>
+      <label><input type="checkbox" id="toggle-url" /> <span data-i18n="urlToggle">URL</span></label>
+      <label><input type="checkbox" id="toggle-title" /> <span data-i18n="titleToggle">标题</span></label>
     </div>
     <div class="frontmatter-section" id="frontmatter-section">
       <div class="frontmatter-header" id="frontmatter-header">
@@ -35,11 +35,11 @@
         <label><input type="checkbox" id="fm-tags" /> tags <span class="fm-value" id="fm-tags-value"></span></label>
       </div>
     </div>
-    <textarea id="editor" placeholder="输入 Markdown..."></textarea>
+    <textarea id="editor" data-i18n-placeholder="enterMarkdown" placeholder="输入 Markdown…"></textarea>
     <div class="footer">
-      <span id="char-count">0 字符</span>
-      <button id="save-btn">保存到 Obsidian</button>
-      <a href="../options/options.html" target="_blank" id="open-options">设置</a>
+      <span id="char-count"><span data-i18n="charCount">0 字符</span></span>
+      <button id="save-btn" data-i18n="saveToObsidian">保存到 Obsidian</button>
+      <a href="../options/options.html" target="_blank" id="open-options" data-i18n="settings">设置</a>
     </div>
     <div id="status"></div>
   </div>

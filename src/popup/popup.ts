@@ -6,7 +6,17 @@ import {
   resolveNotePath,
   formatFrontmatterDate,
 } from '../shared/templates.js';
+import { t, localizePage } from '../shared/i18n.js';
 import type { PageInfo, Draft, ExtensionSettings, FrontmatterKey } from '../shared/types.js';
+
+function localizePlaceholders(): void {
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (key) {
+      (el as HTMLInputElement | HTMLTextAreaElement).placeholder = t(key);
+    }
+  });
+}
 
 const editor = document.getElementById('editor') as HTMLTextAreaElement;
 const toggleUrl = document.getElementById('toggle-url') as HTMLInputElement;
@@ -94,6 +104,8 @@ export async function init(): Promise<void> {
   updateTargetPath();
   updateCharCount();
   renderFrontmatter();
+  localizePage();
+  localizePlaceholders();
 }
 
 export function getComputedFolder(date = new Date()): string {
@@ -158,7 +170,7 @@ export function getFrontmatterValue(key: FrontmatterKey, date = new Date()): str
 export function renderFrontmatter(): void {
   const config = getFrontmatterConfig();
   const enabledKeys = FM_IDS.filter((key) => config[key]);
-  frontmatterSummary.textContent = enabledKeys.length > 0 ? enabledKeys.join(', ') : '无';
+  frontmatterSummary.textContent = enabledKeys.length > 0 ? enabledKeys.join(', ') : t('none');
 
   FM_IDS.forEach((key) => {
     fmCheckboxes[key].checked = config[key];
@@ -188,11 +200,11 @@ export function updateTargetPath(): void {
   const folder = currentDraft.targetFolder || getComputedFolder(date);
   const filename = currentDraft.targetFilename || getComputedFilename(date);
   const path = resolveNotePath(folder, filename);
-  targetPathEl.textContent = `保存到：${path}`;
+  targetPathEl.textContent = t('saveToPrefix') + path;
 }
 
 export function updateCharCount(): void {
-  charCountEl.textContent = `${editor.value.length} 字符`;
+  charCountEl.textContent = `${editor.value.length} ${t('charCount')}`;
 }
 
 export async function saveDraft(): Promise<void> {
@@ -201,7 +213,7 @@ export async function saveDraft(): Promise<void> {
 }
 
 async function triggerFallback(filename: string, content: string, errorMessage: string): Promise<void> {
-  statusEl.textContent = `保存失败：${errorMessage}，正在下载兜底文件…`;
+  statusEl.textContent = t('saveFailedDownloading', { error: errorMessage });
   statusEl.className = 'error';
   try {
     const downloadResult = await chrome.runtime.sendMessage({
@@ -210,13 +222,19 @@ async function triggerFallback(filename: string, content: string, errorMessage: 
       content,
     });
     if (downloadResult?.ok) {
-      statusEl.textContent = `保存失败：${errorMessage}，已下载兜底文件`;
+      statusEl.textContent = t('saveFailedDownloaded', { error: errorMessage });
     } else {
-      statusEl.textContent = `保存失败：${errorMessage}；兜底下载也失败：${downloadResult?.error ?? '未知错误'}`;
+      statusEl.textContent = t('saveFailedDownloadFailed', {
+        error: errorMessage,
+        downloadError: downloadResult?.error ?? t('unknownError'),
+      });
     }
   } catch (downloadErr) {
-    const downloadMessage = downloadErr instanceof Error ? downloadErr.message : '未知错误';
-    statusEl.textContent = `保存失败：${errorMessage}；兜底下载也失败：${downloadMessage}`;
+    const downloadMessage = downloadErr instanceof Error ? downloadErr.message : t('unknownError');
+    statusEl.textContent = t('saveFailedDownloadFailed', {
+      error: errorMessage,
+      downloadError: downloadMessage,
+    });
   }
 }
 
@@ -249,20 +267,20 @@ async function copyToClipboard(tabId: number, text: string): Promise<boolean> {
 
 export async function handleSave(): Promise<void> {
   if (!settings.vaultName) {
-    statusEl.textContent = '请先填写 Obsidian 仓库名（打开设置）';
+    statusEl.textContent = t('pleaseSetVaultName');
     statusEl.className = 'error';
     return;
   }
 
   if (!editor.value.trim()) {
-    if (!window.confirm('编辑器为空，确定要保存空笔记吗？')) {
-      statusEl.textContent = '已取消保存';
+    if (!window.confirm(t('confirmSaveEmptyNote'))) {
+      statusEl.textContent = t('saveCancelled');
       statusEl.className = '';
       return;
     }
   }
 
-  statusEl.textContent = '保存中…';
+  statusEl.textContent = t('saving');
   statusEl.className = '';
 
   const currentDraft = getCurrentDraft();
@@ -276,7 +294,7 @@ export async function handleSave(): Promise<void> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const tabId = tab?.id;
   if (!tabId) {
-    await triggerFallback(filename, content, '无法获取当前标签页');
+    await triggerFallback(filename, content, t('cannotGetCurrentTab'));
     return;
   }
 
@@ -293,14 +311,14 @@ export async function handleSave(): Promise<void> {
       await clearDraft();
       editor.value = '';
       draft = { ...draft, targetFolder: '', targetFilename: '', frontmatterOverrides: {} };
-      statusEl.textContent = '已保存到 Obsidian';
+      statusEl.textContent = t('savedToObsidian');
       statusEl.className = 'success';
       updateTargetPath();
     } else {
-      await triggerFallback(filename, content, result?.error ?? '未知错误');
+      await triggerFallback(filename, content, result?.error ?? t('unknownError'));
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : '消息通道失败';
+    const message = err instanceof Error ? err.message : t('messageChannelFailed');
     await triggerFallback(filename, content, message);
   }
 }
