@@ -104,6 +104,14 @@ npm run coverage # 覆盖率
 
 详见 [`docs/architecture.md`](./docs/architecture.md)。
 
+## 支持开发者
+
+如果这款工具帮到了你，可以扫码请作者喝杯咖啡 ☕
+
+| 微信 | 支付宝 |
+| :---: | :---: |
+| ![微信支付](./public/assets/wechat-qr.jpg) | ![支付宝](./public/assets/alipay-qr.jpg) |
+
 ## 致谢
 
 - 页面元数据（author、description、site 等）的提取思路参考了 [Obsidian Web Clipper](https://github.com/obsidianmd/obsidian-clipper) 所基于的开源库 [Defuddle](https://github.com/kepano/defuddle) 的启发式策略。本扩展独立实现了相关逻辑，未直接复制其源代码。
