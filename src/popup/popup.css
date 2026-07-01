@@ -1,0 +1,43 @@
+body {
+  width: 360px;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+}
+.popup {
+  padding: 12px;
+}
+.target-path {
+  color: #555;
+  font-size: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.toggles {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+textarea {
+  width: 100%;
+  height: 160px;
+  resize: vertical;
+  box-sizing: border-box;
+  padding: 8px;
+  font-family: monospace;
+}
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+#status {
+  margin-top: 8px;
+  font-size: 12px;
+}
+.success { color: green; }
+.error { color: red; }

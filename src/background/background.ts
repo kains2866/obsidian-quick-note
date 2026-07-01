@@ -79,7 +79,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   }
   if (request.type === 'DOWNLOAD_NOTE') {
     downloadMarkdownFile(request.filename, request.content);
-    sendResponse({ success: true });
+    sendResponse({ ok: true });
     return true;
   }
   return false;
