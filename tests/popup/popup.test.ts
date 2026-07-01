@@ -8,6 +8,7 @@ import {
   type Mock,
 } from 'vitest';
 import { DEFAULT_SETTINGS, DEFAULT_DRAFT, STORAGE_KEYS } from '../../src/shared/constants.js';
+import { formatFrontmatterDate } from '../../src/shared/templates.js';
 import type { ExtensionSettings, Draft, PageInfo } from '../../src/shared/types.js';
 
 type PopupModule = typeof import('../../src/popup/popup.js');
@@ -523,7 +524,9 @@ describe('popup', () => {
       });
       await init();
       document.getElementById('frontmatter-header')?.click();
+      const expectedDate = formatFrontmatterDate(FIXED_DATE, SETTINGS_WITH_VAULT.dateFormat).value;
       expect((document.getElementById('fm-url-value') as HTMLSpanElement).textContent).toBe(page.url);
+      expect((document.getElementById('fm-date-value') as HTMLSpanElement).textContent).toBe(expectedDate);
       expect((document.getElementById('fm-author-value') as HTMLSpanElement).textContent).toBe('John Doe');
     });
 
@@ -579,6 +582,75 @@ describe('popup', () => {
       const contentParam = decodeURIComponent(url.split('content=')[1].split('&')[0]);
       expect(contentParam).toContain('note body');
       expect(contentParam).not.toContain('title:');
+    });
+
+    it('shows 无 in summary when all frontmatter fields are disabled', async () => {
+      const storedSettings: ExtensionSettings = {
+        ...SETTINGS_WITH_VAULT,
+        includeFrontmatterTitle: false,
+        includeFrontmatterDate: false,
+        includeFrontmatterUrl: false,
+        includeFrontmatterAuthor: false,
+        includeFrontmatterDescription: false,
+        includeFrontmatterSite: false,
+        includeFrontmatterTags: false,
+      };
+      const { init } = await loadPopup({ storedSettings });
+      await init();
+      const summary = document.getElementById('frontmatter-summary') as HTMLSpanElement;
+      expect(summary.textContent).toBe('无');
+    });
+
+    it('initializes checkbox states from stored frontmatterOverrides', async () => {
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        frontmatterOverrides: { title: false, author: true },
+      };
+      const { init } = await loadPopup({ storedSettings: SETTINGS_WITH_VAULT, storedDraft });
+      await init();
+      document.getElementById('frontmatter-header')?.click();
+      expect((document.getElementById('fm-title') as HTMLInputElement).checked).toBe(false);
+      expect((document.getElementById('fm-author') as HTMLInputElement).checked).toBe(true);
+      expect((document.getElementById('fm-date') as HTMLInputElement).checked).toBe(true);
+    });
+
+    it('persists { key: true } when toggling a field on while its default is off', async () => {
+      const storedSettings: ExtensionSettings = {
+        ...SETTINGS_WITH_VAULT,
+        includeFrontmatterAuthor: false,
+      };
+      const { init } = await loadPopup({ storedSettings });
+      await init();
+      document.getElementById('frontmatter-header')?.click();
+      const authorCheckbox = document.getElementById('fm-author') as HTMLInputElement;
+      authorCheckbox.checked = true;
+      authorCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      await vi.waitFor(() => {
+        expect(chrome.storage.local.set).toHaveBeenCalled();
+      });
+
+      const lastCall = (chrome.storage.local.set as Mock).mock.calls.at(-1);
+      const savedDraft = lastCall[0]['oqn:draft'] as Draft;
+      expect(savedDraft.frontmatterOverrides).toEqual({ author: true });
+    });
+
+    it('clears frontmatterOverrides after a successful save', async () => {
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        frontmatterOverrides: { title: false },
+      };
+      const { init, handleSave, getCurrentDraft } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        storedDraft,
+      });
+      await init();
+
+      const editor = document.getElementById('editor') as HTMLTextAreaElement;
+      editor.value = 'note body';
+      await handleSave();
+
+      expect(getCurrentDraft().frontmatterOverrides).toEqual({});
     });
   });
 });

@@ -4,6 +4,7 @@ import {
   generateFilename,
   buildNoteContent,
   resolveNotePath,
+  formatFrontmatterDate,
 } from '../shared/templates.js';
 import type { PageInfo, Draft, ExtensionSettings, FrontmatterKey } from '../shared/types.js';
 
@@ -138,7 +139,7 @@ export function getFrontmatterValue(key: FrontmatterKey, date = new Date()): str
     case 'title':
       return pageInfo.title || '';
     case 'date':
-      return date.toLocaleString();
+      return formatFrontmatterDate(date, settings.dateFormat).value;
     case 'url':
       return pageInfo.url || '';
     case 'author':
@@ -291,7 +292,7 @@ export async function handleSave(): Promise<void> {
     if (result?.ok) {
       await clearDraft();
       editor.value = '';
-      draft = { ...draft, targetFolder: '', targetFilename: '' };
+      draft = { ...draft, targetFolder: '', targetFilename: '', frontmatterOverrides: {} };
       statusEl.textContent = '已保存到 Obsidian';
       statusEl.className = 'success';
       updateTargetPath();
