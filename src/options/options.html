@@ -1,10 +1,55 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Obsidian Quick Note Options</title>
-  </head>
-  <body>
-    <h1>Options</h1>
-  </body>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>Obsidian Quick Note 设置</title>
+  <link rel="stylesheet" href="./options.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Obsidian Quick Note 设置</h1>
+    <form id="settings-form">
+      <label>
+        Local REST API 地址
+        <input type="text" id="api-url" value="http://127.0.0.1:27123" />
+      </label>
+      <label>
+        API Key
+        <input type="password" id="api-key" />
+      </label>
+      <button type="button" id="test-connection">测试连接</button>
+      <span id="connection-status"></span>
+
+      <label>
+        默认保存文件夹
+        <input type="text" id="base-folder" value="速记" />
+      </label>
+      <label>
+        日期子目录模板
+        <input type="text" id="date-template" value="{{YYYY}}/{{MM}}" />
+      </label>
+
+      <fieldset>
+        <legend>Frontmatter</legend>
+        <label><input type="checkbox" id="fm-title" /> title</label>
+        <label><input type="checkbox" id="fm-date" /> date</label>
+        <label><input type="checkbox" id="fm-url" /> url</label>
+        <label><input type="checkbox" id="fm-tags" /> tags</label>
+      </fieldset>
+
+      <label>
+        默认标签（逗号分隔）
+        <input type="text" id="default-tags" value="quick-note" />
+      </label>
+
+      <label>
+        <input type="checkbox" id="ignore-cert" />
+        忽略 HTTPS 证书错误
+      </label>
+
+      <button type="submit">保存设置</button>
+    </form>
+  </div>
+  <script type="module" src="./options.ts"></script>
+</body>
 </html>
