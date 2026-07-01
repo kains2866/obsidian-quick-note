@@ -332,12 +332,44 @@ export function closeTargetEdit(): void {
   targetEditEl.classList.remove('visible');
 }
 
+function normalizeFilenameInput(value: string): string {
+  return value.trim().replace(/\.md$/i, '');
+}
+
+function guessToggleStateFromFilename(filename: string, date = new Date()): {
+  includeTitle: boolean;
+  includeUrl: boolean;
+} {
+  const normalized = normalizeFilenameInput(filename);
+  if (!normalized) {
+    return { includeTitle: toggleTitle.checked, includeUrl: toggleUrl.checked };
+  }
+
+  const titleName = generateFilename(editor.value, pageInfo, true, false, date);
+  const urlName = generateFilename(editor.value, pageInfo, false, true, date);
+
+  if (normalized === titleName) {
+    return { includeTitle: true, includeUrl: false };
+  }
+  if (normalized === urlName) {
+    return { includeTitle: false, includeUrl: true };
+  }
+  return { includeTitle: false, includeUrl: false };
+}
+
 export async function saveTargetEdit(): Promise<void> {
+  const rawFilename = targetFilenameInput.value.trim();
+  const date = new Date();
+  const { includeTitle, includeUrl } = guessToggleStateFromFilename(rawFilename, date);
+
+  toggleTitle.checked = includeTitle;
+  toggleUrl.checked = includeUrl;
+
   draft = {
     ...getCurrentDraft(),
     targetFolder: targetFolderInput.value.trim(),
     // Empty filename means "fall back to auto-generated filename".
-    targetFilename: targetFilenameInput.value.trim(),
+    targetFilename: rawFilename,
   };
   await setDraft(draft);
   updateTargetPath();
@@ -354,6 +386,10 @@ toggleTitle.addEventListener('change', () => {
   }
   // Clear any manual filename override so the toggle takes effect immediately.
   draft = { ...getCurrentDraft(), targetFilename: '' };
+  // If the user is currently editing the target filename, sync it back to the auto-generated one.
+  if (targetEditEl.classList.contains('visible')) {
+    targetFilenameInput.value = getComputedFilename();
+  }
   updateTargetPath();
   saveDraft();
 });
@@ -364,6 +400,10 @@ toggleUrl.addEventListener('change', () => {
   }
   // Clear any manual filename override so the toggle takes effect immediately.
   draft = { ...getCurrentDraft(), targetFilename: '' };
+  // If the user is currently editing the target filename, sync it back to the auto-generated one.
+  if (targetEditEl.classList.contains('visible')) {
+    targetFilenameInput.value = getComputedFilename();
+  }
   updateTargetPath();
   saveDraft();
 });
