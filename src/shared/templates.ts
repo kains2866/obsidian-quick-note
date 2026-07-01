@@ -24,6 +24,7 @@ export function generateFilename(
   page?: PageInfo,
   includeTitle = false,
   includeUrl = false,
+  date = new Date(),
 ): string {
   let name = '';
   if (includeTitle && page?.title) {
@@ -42,9 +43,8 @@ export function generateFilename(
   }
 
   if (!name) {
-    const timestamp = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
-    name = `${timestamp.getFullYear()}${pad(timestamp.getMonth() + 1)}${pad(timestamp.getDate())}-${pad(timestamp.getHours())}${pad(timestamp.getMinutes())}${pad(timestamp.getSeconds())}`;
+    name = `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
   }
 
   name = sanitizeFileName(name);
@@ -58,13 +58,14 @@ export function buildFrontmatter(
   title: string,
   url: string,
   settings: ExtensionSettings,
+  date = new Date(),
 ): string {
   const fields: string[] = [];
   if (settings.includeFrontmatterTitle) {
     fields.push(`title: "${title.replace(/"/g, '\\"')}"`);
   }
   if (settings.includeFrontmatterDate) {
-    fields.push(`date: "${new Date().toISOString()}"`);
+    fields.push(`date: "${date.toISOString()}"`);
   }
   if (settings.includeFrontmatterUrl && url) {
     fields.push(`url: "${url.replace(/"/g, '\\"')}"`);
@@ -82,13 +83,15 @@ export function buildNoteContent(
   media: MediaInfo | undefined,
   draft: Draft,
   settings: ExtensionSettings,
+  date = new Date(),
 ): string {
   const parts: string[] = [];
 
-  if (draft.includeTitle && page.title) {
+  if (draft.includeTitle && page.title && draft.includeUrl && page.url) {
+    parts.push(`# [${page.title}](${page.url})`);
+  } else if (draft.includeTitle && page.title) {
     parts.push(`# ${page.title}`);
-  }
-  if (draft.includeUrl && page.url) {
+  } else if (draft.includeUrl && page.url) {
     parts.push(page.url);
   }
 
@@ -105,6 +108,7 @@ export function buildNoteContent(
     draft.targetFilename || page.title || 'Quick Note',
     page.url,
     settings,
+    date,
   );
   return frontmatter + fullContent;
 }
