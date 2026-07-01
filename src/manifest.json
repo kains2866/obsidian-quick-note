@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "Obsidian Quick Note",
+  "version": "0.1.0",
+  "description": "Quickly capture Markdown notes and save them to Obsidian.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "downloads"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:27123/*",
+    "https://127.0.0.1:27124/*"
+  ],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_page": "src/options/options.html",
+  "background": {
+    "service_worker": "src/background/background.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/content.ts"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "_execute_action": {
+      "description": "Open Obsidian Quick Note popup"
+    }
+  }
+}
