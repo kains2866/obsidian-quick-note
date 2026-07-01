@@ -86,6 +86,88 @@ describe('content helpers', () => {
       head.removeChild(descMeta);
       head.removeChild(siteMeta);
     });
+
+    it('extracts author from JSON-LD', async () => {
+      const { getPageInfo } = await loadContent();
+      const head = document.head;
+
+      const script = document.createElement('script');
+      script.setAttribute('type', 'application/ld+json');
+      script.textContent = JSON.stringify({
+        '@type': 'Article',
+        headline: 'JSON-LD Article',
+        author: { '@type': 'Person', name: 'Jane Smith' },
+      });
+      head.appendChild(script);
+
+      const info = getPageInfo();
+      expect(info.author).toBe('Jane Smith');
+
+      head.removeChild(script);
+    });
+
+    it('extracts author from rel="author" link', async () => {
+      const { getPageInfo } = await loadContent();
+      const body = document.body;
+
+      const h1 = document.createElement('h1');
+      h1.textContent = 'Article Title';
+      body.appendChild(h1);
+
+      const byline = document.createElement('div');
+      const authorLink = document.createElement('a');
+      authorLink.setAttribute('rel', 'author');
+      authorLink.textContent = 'Rel Author';
+      byline.appendChild(authorLink);
+      body.appendChild(byline);
+
+      const info = getPageInfo();
+      expect(info.author).toBe('Rel Author');
+
+      body.removeChild(h1);
+      body.removeChild(byline);
+    });
+
+    it('extracts Chinese author near date-adjacent byline', async () => {
+      const { getPageInfo } = await loadContent();
+      const body = document.body;
+
+      const h1 = document.createElement('h1');
+      h1.textContent = '中文文章标题';
+      body.appendChild(h1);
+
+      const metaDiv = document.createElement('div');
+      const dateSpan = document.createElement('span');
+      dateSpan.textContent = '2025年02月26日';
+      const authorLink = document.createElement('a');
+      authorLink.textContent = '程序员的勇敢';
+      metaDiv.appendChild(dateSpan);
+      metaDiv.appendChild(authorLink);
+      body.appendChild(metaDiv);
+
+      const info = getPageInfo();
+      expect(info.author).toBe('程序员的勇敢');
+
+      body.removeChild(h1);
+      body.removeChild(metaDiv);
+    });
+
+    it('cleans site name from title', async () => {
+      const { getPageInfo } = await loadContent();
+      const head = document.head;
+
+      const siteMeta = document.createElement('meta');
+      siteMeta.setAttribute('property', 'og:site_name');
+      siteMeta.setAttribute('content', 'Example Site');
+      head.appendChild(siteMeta);
+
+      document.title = 'Great Article | Example Site';
+
+      const info = getPageInfo();
+      expect(info.title).toBe('Great Article');
+
+      head.removeChild(siteMeta);
+    });
   });
 
   describe('copyTextToClipboard', () => {
