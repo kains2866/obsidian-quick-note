@@ -27,10 +27,12 @@ body {
   line-height: 1.5;
   color: var(--ink);
   background: var(--surface);
+  height: auto;
+  overflow: hidden;
 }
 
 .popup {
-  padding: 16px;
+  padding: 16px 16px 12px;
 }
 
 .target-path {
@@ -288,6 +290,10 @@ textarea:focus {
   margin-top: 10px;
   font-size: 12px;
   min-height: 18px;
+}
+
+#status:empty {
+  display: none;
 }
 
 .success {
