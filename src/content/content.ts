@@ -1,3 +1,12 @@
+/**
+ * Content script for extracting page metadata.
+ *
+ * The extraction strategy (meta → JSON-LD → DOM → byline heuristics) is inspired
+ * by Defuddle, the open-source extraction library used by Obsidian Web Clipper.
+ * The implementation here is independent and written from scratch for this extension.
+ *
+ * @see https://github.com/kepano/defuddle
+ */
 import type { PageInfo } from '../shared/types.js';
 
 function getMetaContent(selector: string): string {

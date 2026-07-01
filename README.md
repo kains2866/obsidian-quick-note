@@ -103,3 +103,7 @@ npm run coverage # 覆盖率
 - 语言切换基于 Chrome 界面语言，暂不支持手动切换。
 
 详见 [`docs/architecture.md`](./docs/architecture.md)。
+
+## 致谢
+
+- 页面元数据（author、description、site 等）的提取思路参考了 [Obsidian Web Clipper](https://github.com/obsidianmd/obsidian-clipper) 所基于的开源库 [Defuddle](https://github.com/kepano/defuddle) 的启发式策略。本扩展独立实现了相关逻辑，未直接复制其源代码。
