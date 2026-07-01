@@ -534,6 +534,68 @@ describe('popup', () => {
       // Placeholder shows the auto-generated filename (derived from title/url/content).
       expect(filenameInput.placeholder.length).toBeGreaterThan(0);
     });
+
+    it('checks title toggle when manual filename matches page title', async () => {
+      const { init, openTargetEdit, saveTargetEdit } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+      });
+      await init();
+
+      openTargetEdit();
+      (document.getElementById('target-filename-input') as HTMLInputElement).value = 'Example Page';
+      await saveTargetEdit();
+
+      expect((document.getElementById('toggle-title') as HTMLInputElement).checked).toBe(true);
+      expect((document.getElementById('toggle-url') as HTMLInputElement).checked).toBe(false);
+    });
+
+    it('checks URL toggle when manual filename matches page URL', async () => {
+      const { init, openTargetEdit, saveTargetEdit } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+      });
+      await init();
+
+      openTargetEdit();
+      // generateFilename sanitizes '/' to '-', so the stored URL-based filename is "example.com-path".
+      (document.getElementById('target-filename-input') as HTMLInputElement).value =
+        'example.com-path';
+      await saveTargetEdit();
+
+      expect((document.getElementById('toggle-title') as HTMLInputElement).checked).toBe(false);
+      expect((document.getElementById('toggle-url') as HTMLInputElement).checked).toBe(true);
+    });
+
+    it('unchecks both toggles when manual filename matches neither title nor URL', async () => {
+      const { init, openTargetEdit, saveTargetEdit } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+      });
+      await init();
+
+      openTargetEdit();
+      (document.getElementById('target-filename-input') as HTMLInputElement).value =
+        'completely-custom-name';
+      await saveTargetEdit();
+
+      expect((document.getElementById('toggle-title') as HTMLInputElement).checked).toBe(false);
+      expect((document.getElementById('toggle-url') as HTMLInputElement).checked).toBe(false);
+    });
+
+    it('syncs auto-generated filename back into target edit when toggling while editing', async () => {
+      const { init, openTargetEdit } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+      });
+      await init();
+
+      openTargetEdit();
+      const filenameInput = document.getElementById('target-filename-input') as HTMLInputElement;
+      filenameInput.value = 'custom-name';
+
+      const urlToggle = document.getElementById('toggle-url') as HTMLInputElement;
+      urlToggle.checked = true;
+      urlToggle.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(filenameInput.value).toBe('example.com-path');
+    });
   });
 
   describe('frontmatter section', () => {
