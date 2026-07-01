@@ -1,9 +1,19 @@
 import { getSettings, setSettings } from '../shared/storage.js';
 import { DEFAULT_SETTINGS } from '../shared/constants.js';
 import { renderTemplate } from '../shared/templates.js';
+import { t, localizePage } from '../shared/i18n.js';
 import type { ExtensionSettings, DateFormat } from '../shared/types.js';
 
 const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
+
+function localizePlaceholders(): void {
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (key) {
+      (el as HTMLInputElement).placeholder = t(key);
+    }
+  });
+}
 
 export async function loadSettings(): Promise<void> {
   const settings = await getSettings();
@@ -30,10 +40,10 @@ export async function loadCurrentShortcut(): Promise<void> {
     const commands = await chrome.commands.getAll();
     const actionCommand = commands.find((cmd) => cmd.name === '_execute_action');
     shortcutEl.textContent = actionCommand?.shortcut
-      ? `当前快捷键：${actionCommand.shortcut}`
-      : '当前快捷键：未设置';
+      ? t('currentShortcut', { shortcut: actionCommand.shortcut })
+      : t('shortcutNotSet');
   } catch {
-    shortcutEl.textContent = '当前快捷键：无法读取';
+    shortcutEl.textContent = t('shortcutReadFailed');
   }
 }
 
@@ -71,7 +81,7 @@ export function updateSavePathPreview(): void {
   const dateTemplate = $('date-template').value.trim();
 
   if (!vaultName) {
-    previewEl.innerHTML = '<span class="warning">请填写 Obsidian 仓库名</span>';
+    previewEl.innerHTML = `<span class="warning">${t('savePathPreviewPlaceholder')}</span>`;
     return;
   }
 
@@ -88,11 +98,11 @@ export function updateSavePathPreview(): void {
         parts.push(dateSubfolder);
       }
     } catch {
-      parts.push('（日期模板格式错误）');
+      parts.push(t('dateTemplateError'));
     }
   }
 
-  parts.push('示例笔记.md');
+  parts.push(t('exampleNote'));
 
   let html = `<strong>${vaultName}</strong>`;
   if (parts.length > 0) {
@@ -101,10 +111,10 @@ export function updateSavePathPreview(): void {
 
   const hints: string[] = [];
   if (!baseFolder) {
-    hints.push('默认保存文件夹为空，将保存到仓库根目录');
+    hints.push(t('baseFolderEmptyHint'));
   }
   if (!dateTemplate) {
-    hints.push('日期子目录模板为空，不创建日期子目录');
+    hints.push(t('dateTemplateEmptyHint'));
   }
 
   if (hints.length > 0) {
@@ -121,13 +131,15 @@ document.getElementById('open-shortcuts')?.addEventListener('click', () => {
 document.getElementById('settings-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   await setSettings(readSettings());
-  alert('设置已保存');
+  alert(t('settingsSaved'));
 });
 
 ['vault-name', 'base-folder', 'date-template'].forEach((id) => {
   document.getElementById(id)?.addEventListener('input', updateSavePathPreview);
 });
 
+localizePage();
+localizePlaceholders();
 loadSettings().then(() => {
   updateSavePathPreview();
 });

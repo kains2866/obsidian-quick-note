@@ -2,48 +2,48 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <title>Obsidian Quick Note 设置</title>
+  <title data-i18n="optionsTitle">Obsidian Quick Note 设置</title>
   <link rel="stylesheet" href="./options.css" />
 </head>
 <body>
   <div class="container">
-    <h1>Obsidian Quick Note 设置</h1>
+    <h1 data-i18n="optionsTitle">Obsidian Quick Note 设置</h1>
     <form id="settings-form">
       <label>
-        Obsidian 仓库名
-        <input type="text" id="vault-name" placeholder="例如：MyVault" />
-        <small>在 Obsidian 左下角看到的仓库名称，必须完全一致。</small>
+        <span data-i18n="vaultNameLabel">Obsidian 仓库名</span>
+        <input type="text" id="vault-name" data-i18n-placeholder="vaultNamePlaceholder" placeholder="例如：MyVault" />
+        <small data-i18n="vaultNameHint">在 Obsidian 左下角看到的仓库名称，必须完全一致。</small>
       </label>
 
       <label>
-        默认保存文件夹
+        <span data-i18n="baseFolderLabel">默认保存文件夹</span>
         <input type="text" id="base-folder" value="速记" />
       </label>
       <label>
-        日期子目录模板
+        <span data-i18n="dateTemplateLabel">日期子目录模板</span>
         <input type="text" id="date-template" value="{{YYYY}}/{{MM}}" />
       </label>
 
       <div class="preview-box">
-        <strong>保存位置预览</strong>
-        <div id="save-path-preview">请先填写 Obsidian 仓库名</div>
+        <strong data-i18n="savePathPreview">保存位置预览</strong>
+        <div id="save-path-preview" data-i18n="savePathPreviewPlaceholder">请先填写 Obsidian 仓库名</div>
       </div>
 
       <label>
         <input type="checkbox" id="include-selected-text" />
-        选中文字自动带入正文
+        <span data-i18n="includeSelectedText">选中文字自动带入正文</span>
       </label>
 
       <fieldset>
-        <legend>Frontmatter</legend>
+        <legend data-i18n="frontmatterLegend">Frontmatter</legend>
         <label><input type="checkbox" id="fm-title" /> title</label>
         <label><input type="checkbox" id="fm-date" /> date</label>
         <label>
-          date 格式
+          <span data-i18n="dateFormatLabel">date 格式</span>
           <select id="date-format">
-            <option value="date">YYYY-MM-DD（日期选择器）</option>
-            <option value="datetime">YYYY-MM-DD HH:mm:ss</option>
-            <option value="iso">ISO 8601 带时区</option>
+            <option value="date" data-i18n="dateFormatDate">YYYY-MM-DD（日期选择器）</option>
+            <option value="datetime" data-i18n="dateFormatDatetime">YYYY-MM-DD HH:mm:ss</option>
+            <option value="iso" data-i18n="dateFormatIso">ISO 8601 带时区</option>
           </select>
         </label>
         <label><input type="checkbox" id="fm-url" /> url</label>
@@ -54,63 +54,63 @@
       </fieldset>
 
       <label>
-        默认标签（逗号分隔）
+        <span data-i18n="defaultTagsLabel">默认标签（逗号分隔）</span>
         <input type="text" id="default-tags" value="quick-note" />
       </label>
 
-      <button type="submit">保存设置</button>
+      <button type="submit" data-i18n="saveSettings">保存设置</button>
       <div class="shortcut-row">
         <span id="current-shortcut">当前快捷键：读取中…</span>
-        <button type="button" id="open-shortcuts">编辑快捷键</button>
+        <button type="button" id="open-shortcuts" data-i18n="editShortcuts">编辑快捷键</button>
       </div>
     </form>
 
     <section class="guide">
-      <h2>使用指引与常见问题</h2>
+      <h2 data-i18n="guideTitle">使用指引与常见问题</h2>
 
       <details>
-        <summary>Obsidian 仓库名</summary>
-        <p>填写你要把 Markdown 文件保存到的仓库名字。仓库名可以在 Obsidian 页面左下角看到；如果你有多个仓库，请填写你希望保存到的那个仓库名。</p>
-        <p class="warning"><strong>务必填写正确：</strong>如果仓库名填错，Obsidian 会弹出 "repository not found" 等错误，但本扩展无法感知 Obsidian 内部是否保存成功，状态栏仍会显示「已保存到 Obsidian」。请确保与 Obsidian 左下角显示的名称完全一致（区分大小写）。</p>
+        <summary data-i18n="guideVaultNameSummary">Obsidian 仓库名</summary>
+        <p data-i18n="guideVaultNameDetail">填写你要把 Markdown 文件保存到的仓库名字。仓库名可以在 Obsidian 页面左下角看到；如果你有多个仓库，请填写你希望保存到的那个仓库名。</p>
+        <p class="warning"><strong data-i18n="guideVaultNameWarning">务必填写正确：</strong><span data-i18n="guideVaultNameWarningDetail">如果仓库名填错，Obsidian 会弹出 "repository not found" 等错误，但本扩展无法感知 Obsidian 内部是否保存成功，状态栏仍会显示「已保存到 Obsidian」。请确保与 Obsidian 左下角显示的名称完全一致（区分大小写）。</span></p>
       </details>
 
       <details>
-        <summary>默认保存文件夹</summary>
-        <p>Markdown 文件默认保存到仓库根目录的指定文件夹里。不填写则直接保存到根目录中。</p>
+        <summary data-i18n="guideBaseFolderSummary">默认保存文件夹</summary>
+        <p data-i18n="guideBaseFolderDetail">Markdown 文件默认保存到仓库根目录的指定文件夹里。不填写则直接保存到根目录中。</p>
       </details>
 
       <details>
-        <summary>日期子目录模板</summary>
-        <p>支持 <code>{{YYYY}}/{{MM}}</code>、<code>{{YYYY}}/doc</code>、<code>{{MM}}/{{DD}}/inbox</code> 这类带日期、时间以及固定文件夹的命名模式，填写后会保存到对应的日期子目录中。不填写则保存到「默认保存文件夹」中。</p>
-        <p>可用变量：<code>{{YYYY}}</code> 年、<code>{{MM}}</code> 月、<code>{{DD}}</code> 日、<code>{{HH}}</code> 时、<code>{{mm}}</code> 分、<code>{{ss}}</code> 秒。</p>
+        <summary data-i18n="guideDateTemplateSummary">日期子目录模板</summary>
+        <p data-i18n="guideDateTemplateDetail1">支持 <code>{{YYYY}}/{{MM}}</code>、<code>{{YYYY}}/doc</code>、<code>{{MM}}/{{DD}}/inbox</code> 这类带日期、时间以及固定文件夹的命名模式，填写后会保存到对应的日期子目录中。不填写则保存到「默认保存文件夹」中。</p>
+        <p data-i18n="guideDateTemplateDetail2">可用变量：<code>{{YYYY}}</code> 年、<code>{{MM}}</code> 月、<code>{{DD}}</code> 日、<code>{{HH}}</code> 时、<code>{{mm}}</code> 分、<code>{{ss}}</code> 秒。</p>
       </details>
 
       <details>
-        <summary>选中文字自动带入正文</summary>
-        <p>如果在页面上用鼠标框选了文字，打开本插件时会将选中的文字自动粘贴到文本框中。关闭此选项则不带入正文。</p>
+        <summary data-i18n="guideSelectedTextSummary">选中文字自动带入正文</summary>
+        <p data-i18n="guideSelectedTextDetail">如果在页面上用鼠标框选了文字，打开本插件时会将选中的文字自动粘贴到文本框中。关闭此选项则不带入正文。</p>
       </details>
 
       <details>
-        <summary>Frontmatter</summary>
-        <p>勾选对应的选项后，保存的 Markdown 文件会在开头生成 YAML frontmatter，包含对应的内容。例如勾选 <b>title</b> 会写入页面标题，勾选 <b>url</b> 会写入来源链接。</p>
+        <summary data-i18n="guideFrontmatterSummary">Frontmatter</summary>
+        <p data-i18n="guideFrontmatterDetail">勾选对应的选项后，保存的 Markdown 文件会在开头生成 YAML frontmatter，包含对应的内容。例如勾选 <b>title</b> 会写入页面标题，勾选 <b>url</b> 会写入来源链接。</p>
       </details>
 
       <details>
-        <summary>默认标签</summary>
-        <p>对应 frontmatter 里的 <code>tags</code>，使用逗号分隔多个标签。请注意标签本身不支持空格。</p>
+        <summary data-i18n="guideDefaultTagsSummary">默认标签</summary>
+        <p data-i18n="guideDefaultTagsDetail">对应 frontmatter 里的 <code>tags</code>，使用逗号分隔多个标签。请注意标签本身不支持空格。</p>
       </details>
 
       <details>
-        <summary>保存时浏览器询问是否打开 Obsidian？</summary>
-        <p>这是 Chrome 的安全机制。首次在某个网站保存时，浏览器会询问「是否允许此网站打开 Obsidian」，请勾选<b>始终允许</b>，以后在该网站保存就不会再弹窗。</p>
+        <summary data-i18n="guidePermissionSummary">保存时浏览器询问是否打开 Obsidian？</summary>
+        <p data-i18n="guidePermissionDetail">这是 Chrome 的安全机制。首次在某个网站保存时，浏览器会询问「是否允许此网站打开 Obsidian」，请勾选<b>始终允许</b>，以后在该网站保存就不会再弹窗。</p>
       </details>
 
       <details>
-        <summary>为什么 Obsidian 没有打开或笔记没保存？</summary>
+        <summary data-i18n="guideTroubleshootSummary">为什么 Obsidian 没有打开或笔记没保存？</summary>
         <ul>
-          <li>确认「Obsidian 仓库名」与 Obsidian 左下角显示的名称完全一致（区分大小写）。</li>
-          <li>确认「默认保存文件夹」和「日期子目录模板」拼写正确，且该文件夹在仓库中真实存在。</li>
-          <li>确认 Obsidian 已安装且能处理 <code>obsidian://</code> 链接。</li>
+          <li data-i18n="guideTroubleshootItem1">确认「Obsidian 仓库名」与 Obsidian 左下角显示的名称完全一致（区分大小写）。</li>
+          <li data-i18n="guideTroubleshootItem2">确认「默认保存文件夹」和「日期子目录模板」拼写正确，且该文件夹在仓库中真实存在。</li>
+          <li data-i18n="guideTroubleshootItem3">确认 Obsidian 已安装且能处理 <code>obsidian://</code> 链接。</li>
         </ul>
       </details>
     </section>

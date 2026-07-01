@@ -8,6 +8,7 @@ import {
   type Mock,
 } from 'vitest';
 import { DEFAULT_SETTINGS } from '../../src/shared/constants.js';
+import { t } from '../../src/shared/i18n.js';
 import type { ExtensionSettings } from '../../src/shared/types.js';
 
 type OptionsModule = typeof import('../../src/options/options.js');
@@ -222,7 +223,7 @@ describe('options page', () => {
       await loadCurrentShortcut();
 
       expect(document.getElementById('current-shortcut')?.textContent).toBe(
-        '当前快捷键：Ctrl+Shift+P',
+        t('currentShortcut', { shortcut: 'Ctrl+Shift+P' }),
       );
     });
 
@@ -236,7 +237,7 @@ describe('options page', () => {
       await loadCurrentShortcut();
 
       expect(document.getElementById('current-shortcut')?.textContent).toBe(
-        '当前快捷键：未设置',
+        t('shortcutNotSet'),
       );
     });
 
@@ -246,7 +247,7 @@ describe('options page', () => {
       await loadCurrentShortcut();
 
       expect(document.getElementById('current-shortcut')?.textContent).toBe(
-        '当前快捷键：无法读取',
+        t('shortcutReadFailed'),
       );
     });
   });
@@ -289,7 +290,7 @@ describe('options page', () => {
       updateSavePathPreview();
 
       const previewEl = document.getElementById('save-path-preview') as HTMLDivElement;
-      expect(previewEl.textContent).toContain('请填写 Obsidian 仓库名');
+      expect(previewEl.textContent).toContain(t('savePathPreviewPlaceholder'));
       expect(previewEl.innerHTML).toContain('warning');
     });
 
@@ -305,7 +306,7 @@ describe('options page', () => {
       const previewEl = document.getElementById('save-path-preview') as HTMLDivElement;
       expect(previewEl.textContent).toContain('MyVault');
       expect(previewEl.textContent).toContain('速记');
-      expect(previewEl.textContent).toContain('示例笔记.md');
+      expect(previewEl.textContent).toContain(t('exampleNote'));
     });
 
     it('shows hints when base folder and date template are empty', async () => {
@@ -318,8 +319,8 @@ describe('options page', () => {
       updateSavePathPreview();
 
       const previewEl = document.getElementById('save-path-preview') as HTMLDivElement;
-      expect(previewEl.textContent).toContain('保存到仓库根目录');
-      expect(previewEl.textContent).toContain('不创建日期子目录');
+      expect(previewEl.textContent).toContain(t('baseFolderEmptyHint'));
+      expect(previewEl.textContent).toContain(t('dateTemplateEmptyHint'));
     });
   });
 });
