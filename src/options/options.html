@@ -119,6 +119,26 @@
         </ul>
       </details>
     </section>
+
+    <footer class="options-footer">
+      <div class="footer-meta">
+        <span data-i18n="footerMadeBy">用 ❤️ 制作</span>
+        <strong class="author-name">Your Name</strong>
+        <span class="footer-divider">·</span>
+        <a href="https://github.com/yourname/obsidian-quick-note" target="_blank" rel="noopener">GitHub</a>
+        <span class="footer-divider">·</span>
+        <a href="mailto:your@email.com" data-i18n="footerEmail">邮件反馈</a>
+      </div>
+
+      <div class="support-developer">
+        <button type="button" id="support-toggle" class="support-toggle" data-i18n="supportDeveloper">☕ 支持开发者</button>
+        <div class="support-qr" id="support-qr" hidden>
+          <p data-i18n="supportQrHint">如果这款工具帮到了你，可以扫码请作者喝杯咖啡 ☕</p>
+          <!-- TODO: 替换为真实收款码图片 -->
+          <div class="qr-placeholder" data-i18n="supportQrPlaceholder">收款码占位图<br>请替换为微信/支付宝收款码</div>
+        </div>
+      </div>
+    </footer>
   </div>
   <script type="module" src="./options.ts"></script>
 </body>

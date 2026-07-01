@@ -120,6 +120,19 @@ document.getElementById('open-shortcuts')?.addEventListener('click', () => {
   chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
 });
 
+const supportToggle = document.getElementById('support-toggle');
+const supportQr = document.getElementById('support-qr');
+if (supportToggle && supportQr) {
+  supportToggle.addEventListener('click', () => {
+    const isHidden = supportQr.hasAttribute('hidden');
+    if (isHidden) {
+      supportQr.removeAttribute('hidden');
+    } else {
+      supportQr.setAttribute('hidden', '');
+    }
+  });
+}
+
 document.getElementById('settings-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   await setSettings(readSettings());
