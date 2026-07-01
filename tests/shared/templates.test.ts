@@ -8,7 +8,7 @@ import {
   buildNoteContent,
   resolveNotePath,
 } from '../../src/shared/templates.js';
-import { DEFAULT_SETTINGS } from '../../src/shared/constants.js';
+import { DEFAULT_SETTINGS, DEFAULT_DRAFT } from '../../src/shared/constants.js';
 import type { PageInfo, Draft, ExtensionSettings } from '../../src/shared/types.js';
 
 const fixedDate = new Date(2026, 6, 1, 15, 30, 44);
@@ -201,5 +201,28 @@ describe('templates', () => {
   it('resolves note path', () => {
     const path = resolveNotePath('速记/2026/07', 'my-file');
     expect(path).toBe('速记/2026/07/my-file.md');
+  });
+});
+
+describe('frontmatter overrides', () => {
+  it('can disable title via override', () => {
+    const settings = { ...DEFAULT_SETTINGS, includeFrontmatterTitle: true };
+    const result = buildFrontmatter(page, settings, new Date(), { title: false });
+    expect(result).not.toContain('title:');
+  });
+
+  it('can enable author via override', () => {
+    const settings = { ...DEFAULT_SETTINGS, includeFrontmatterAuthor: false };
+    const pageWithAuthor: PageInfo = { ...page, author: 'John' };
+    const result = buildFrontmatter(pageWithAuthor, settings, new Date(), { author: true });
+    expect(result).toContain('author: "John"');
+  });
+
+  it('buildNoteContent uses draft overrides', () => {
+    const settings = { ...DEFAULT_SETTINGS, includeFrontmatterTitle: true };
+    const draft: Draft = { ...DEFAULT_DRAFT, frontmatterOverrides: { title: false } };
+    const content = buildNoteContent('body', page, draft, settings);
+    expect(content).toContain('body');
+    expect(content).not.toContain('title:');
   });
 });

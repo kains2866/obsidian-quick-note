@@ -1,4 +1,4 @@
-import type { ExtensionSettings, PageInfo, Draft } from './types.js';
+import type { ExtensionSettings, PageInfo, Draft, FrontmatterKey } from './types.js';
 import { MAX_FILENAME_LENGTH } from './constants.js';
 
 export function renderTemplate(template: string, date: Date): string {
@@ -111,28 +111,37 @@ export function buildFrontmatter(
   page: PageInfo,
   settings: ExtensionSettings,
   date = new Date(),
+  overrides?: Partial<Record<FrontmatterKey, boolean>>,
 ): string {
+  const includeTitle = overrides?.title ?? settings.includeFrontmatterTitle;
+  const includeDate = overrides?.date ?? settings.includeFrontmatterDate;
+  const includeUrl = overrides?.url ?? settings.includeFrontmatterUrl;
+  const includeAuthor = overrides?.author ?? settings.includeFrontmatterAuthor;
+  const includeDescription = overrides?.description ?? settings.includeFrontmatterDescription;
+  const includeSite = overrides?.site ?? settings.includeFrontmatterSite;
+  const includeTags = overrides?.tags ?? settings.includeFrontmatterTags;
+
   const fields: string[] = [];
-  if (settings.includeFrontmatterTitle && page.title) {
+  if (includeTitle && page.title) {
     fields.push(`title: "${escapeYamlValue(page.title)}"`);
   }
-  if (settings.includeFrontmatterDate) {
+  if (includeDate) {
     const formatted = formatFrontmatterDate(date, settings.dateFormat);
     fields.push(formatted.quoted ? `date: "${formatted.value}"` : `date: ${formatted.value}`);
   }
-  if (settings.includeFrontmatterUrl && page.url) {
+  if (includeUrl && page.url) {
     fields.push(`url: "${escapeYamlValue(page.url)}"`);
   }
-  if (settings.includeFrontmatterAuthor && page.author) {
+  if (includeAuthor && page.author) {
     fields.push(`author: "${escapeYamlValue(page.author)}"`);
   }
-  if (settings.includeFrontmatterDescription && page.description) {
+  if (includeDescription && page.description) {
     fields.push(`description: "${escapeYamlValue(page.description)}"`);
   }
-  if (settings.includeFrontmatterSite && page.site) {
+  if (includeSite && page.site) {
     fields.push(`site: "${escapeYamlValue(page.site)}"`);
   }
-  if (settings.includeFrontmatterTags && settings.defaultTags.length > 0) {
+  if (includeTags && settings.defaultTags.length > 0) {
     fields.push('tags:\n' + settings.defaultTags.map((t) => `  - ${t}`).join('\n'));
   }
   if (fields.length === 0) return '';
@@ -146,7 +155,7 @@ export function buildNoteContent(
   settings: ExtensionSettings,
   date = new Date(),
 ): string {
-  const frontmatter = buildFrontmatter(page, settings, date);
+  const frontmatter = buildFrontmatter(page, settings, date, draft.frontmatterOverrides);
   return frontmatter + userContent;
 }
 
