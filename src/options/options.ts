@@ -4,7 +4,7 @@ import type { ExtensionSettings } from '../shared/types.js';
 
 const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
 
-async function loadSettings(): Promise<void> {
+export async function loadSettings(): Promise<void> {
   const settings = await getSettings();
   $('api-url').value = settings.apiUrl;
   $('api-key').value = settings.apiKey;
@@ -18,7 +18,7 @@ async function loadSettings(): Promise<void> {
   $('ignore-cert').checked = settings.ignoreCertErrors;
 }
 
-function readSettings(): ExtensionSettings {
+export function readSettings(): ExtensionSettings {
   return {
     apiUrl: $('api-url').value.trim() || DEFAULT_SETTINGS.apiUrl,
     apiKey: $('api-key').value.trim(),
@@ -33,7 +33,7 @@ function readSettings(): ExtensionSettings {
   };
 }
 
-async function testConnection(): Promise<void> {
+export async function testConnection(): Promise<void> {
   const settings = readSettings();
   const status = $('connection-status');
   status.textContent = '连接中...';
