@@ -58,8 +58,13 @@ describe('templates', () => {
     expect(filename).toBe('example.com-path');
   });
 
-  it('generates filename from timestamp fallback before content first line', () => {
+  it('generates filename from content first line when title and url are off', () => {
     const filename = generateFilename('First line here\nsecond', { url: '', title: '', selectedText: '' }, false, false, fixedDate);
+    expect(filename).toBe('First line here');
+  });
+
+  it('generates filename from timestamp when no title, url, or content', () => {
+    const filename = generateFilename('', { url: '', title: '', selectedText: '' }, false, false, fixedDate);
     expect(filename).toBe('20260701-153044');
   });
 
