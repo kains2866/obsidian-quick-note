@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getLanguage, t, localizePage, messages } from '../../src/shared/i18n.js';
+import {
+  getLanguage,
+  t,
+  localizePage,
+  localizePlaceholders,
+  messages,
+} from '../../src/shared/i18n.js';
 
 describe('i18n', () => {
   let originalLanguage: PropertyDescriptor | undefined;
@@ -74,5 +80,25 @@ describe('i18n', () => {
     document.body.innerHTML = '<button data-i18n="saveToObsidian">保存到 Obsidian</button>';
     localizePage();
     expect(document.querySelector('button')?.textContent).toBe('Save to Obsidian');
+  });
+
+  it('localizes placeholders for inputs and textareas', () => {
+    setNavigatorLanguage('en-US');
+    document.body.innerHTML = `
+      <input data-i18n-placeholder="vaultNamePlaceholder" placeholder="例如：MyVault" />
+      <textarea data-i18n-placeholder="enterMarkdown" placeholder="输入 Markdown…"></textarea>
+    `;
+    localizePlaceholders();
+    expect(document.querySelector('input')?.placeholder).toBe('e.g. MyVault');
+    expect(document.querySelector('textarea')?.placeholder).toBe('Enter Markdown…');
+  });
+
+  it('falls back to English when a key is missing in the current language', () => {
+    setNavigatorLanguage('zh-CN');
+    const key = '__testOnlyEnglishKey';
+    const zhValue = messages['zh-CN'][key];
+    delete (messages['zh-CN'] as Record<string, string>)[key];
+    expect(t(key)).toBe(messages['en'][key]);
+    messages['zh-CN'][key] = zhValue;
   });
 });

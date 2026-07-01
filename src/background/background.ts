@@ -1,3 +1,5 @@
+import { t } from '../shared/i18n.js';
+
 export function downloadMarkdownFile(filename: string, content: string): Promise<number> {
   const dataUrl = `data:text/markdown;charset=utf-8,${encodeURIComponent(content)}`;
   return new Promise((resolve, reject) => {
@@ -22,7 +24,7 @@ export async function openObsidianUrl(url: string): Promise<void> {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   const currentTab = tabs[0];
   if (!currentTab?.id) {
-    throw new Error('没有当前标签页');
+    throw new Error(t('cannotGetCurrentTab'));
   }
   await chrome.tabs.update(currentTab.id, { url });
 }

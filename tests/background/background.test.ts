@@ -64,7 +64,7 @@ describe('background', () => {
     const { openObsidianUrl } = await loadBackground();
     mockTabsQuery.mockResolvedValue([]);
 
-    await expect(openObsidianUrl('obsidian://new?file=note')).rejects.toThrow('没有当前标签页');
+    await expect(openObsidianUrl('obsidian://new?file=note')).rejects.toThrow('Cannot get current tab');
   });
 
   it('handles OPEN_OBSIDIAN_URL message', async () => {
