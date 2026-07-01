@@ -339,21 +339,10 @@ button[type="submit"]:active {
   gap: 0.75rem;
 }
 
-.support-toggle {
-  padding: 0.4rem 0.9rem;
+.support-title {
   font-size: 13px;
   font-weight: 500;
   color: var(--accent);
-  background: var(--accent-soft);
-  border: 1px solid #bfe5cf;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.support-toggle:hover {
-  background: var(--accent);
-  color: white;
 }
 
 .support-qr {
@@ -361,7 +350,7 @@ button[type="submit"]:active {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  max-width: 260px;
+  max-width: 360px;
 }
 
 .support-qr p {
@@ -383,9 +372,9 @@ button[type="submit"]:active {
 }
 
 .qr-grid img {
-  width: 100%;
-  max-width: 160px;
-  height: auto;
+  width: 140px;
+  height: 140px;
+  object-fit: cover;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 }
