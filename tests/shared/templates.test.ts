@@ -1,14 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   renderTemplate,
   sanitizeFileName,
   generateFilename,
+  formatFrontmatterDate,
   buildFrontmatter,
   buildNoteContent,
   resolveNotePath,
 } from '../../src/shared/templates.js';
 import { DEFAULT_SETTINGS } from '../../src/shared/constants.js';
-import type { PageInfo, MediaInfo, Draft, ExtensionSettings } from '../../src/shared/types.js';
+import type { PageInfo, Draft, ExtensionSettings } from '../../src/shared/types.js';
 
 const fixedDate = new Date(2026, 6, 1, 15, 30, 44);
 
@@ -16,27 +17,45 @@ const page: PageInfo = {
   url: 'https://example.com/path?x=1',
   title: 'Example Page',
   selectedText: '',
+  author: 'John Doe',
+  description: 'An example page',
+  site: 'example.com',
 };
 
-const media: MediaInfo = {
-  url: 'https://example.com/video',
-  title: 'Cool Video',
-  currentTime: '03:24',
+const emptyPage: PageInfo = {
+  url: '',
+  title: '',
+  selectedText: '',
+  author: '',
+  description: '',
+  site: '',
 };
 
 const draft: Draft = {
   content: 'my note',
   includeUrl: true,
   includeTitle: true,
-  includeMedia: true,
   targetFolder: '速记/2026/07',
   targetFilename: '',
 };
 
 describe('templates', () => {
+  beforeEach(() => {
+    vi.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(-480);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('renders date template', () => {
     const result = renderTemplate('{{YYYY}}/{{MM}}', new Date('2026-07-01T15:53:52'));
     expect(result).toBe('2026/07');
+  });
+
+  it('preserves fixed text in date template', () => {
+    const result = renderTemplate('{{YYYY}}/doc', new Date('2026-07-01T15:53:52'));
+    expect(result).toBe('2026/doc');
   });
 
   it('sanitizes filename', () => {
@@ -53,32 +72,70 @@ describe('templates', () => {
     expect(filename).toBe('Example Page');
   });
 
-  it('generates filename from url when url toggle on', () => {
+  it('generates filename from url when url toggle on and title toggle off', () => {
     const filename = generateFilename('', page, false, true);
     expect(filename).toBe('example.com-path');
   });
 
-  it('generates filename from content first line when title and url are off', () => {
-    const filename = generateFilename('First line here\nsecond', { url: '', title: '', selectedText: '' }, false, false, fixedDate);
+  it('generates filename from content first line when title and url toggles are off', () => {
+    const filename = generateFilename('First line here\nsecond', emptyPage, false, false, fixedDate);
     expect(filename).toBe('First line here');
   });
 
   it('generates filename from timestamp when no title, url, or content', () => {
-    const filename = generateFilename('', { url: '', title: '', selectedText: '' }, false, false, fixedDate);
+    const filename = generateFilename('', emptyPage, false, false, fixedDate);
     expect(filename).toBe('20260701-153044');
   });
 
-  it('builds frontmatter', () => {
-    const fm = buildFrontmatter('Note Title', page.url, DEFAULT_SETTINGS, fixedDate);
+  it('builds frontmatter with default date-only format', () => {
+    const fm = buildFrontmatter(page, DEFAULT_SETTINGS, fixedDate);
     expect(fm).toBe(
       '---\n' +
-      'title: "Note Title"\n' +
-      'date: "2026-07-01T07:30:44.000Z"\n' +
+      'title: "Example Page"\n' +
+      'date: 2026-07-01\n' +
       'url: "https://example.com/path?x=1"\n' +
       'tags:\n' +
       '  - quick-note\n' +
       '---\n\n',
     );
+  });
+
+  it('builds frontmatter with datetime date format', () => {
+    const settings: ExtensionSettings = { ...DEFAULT_SETTINGS, dateFormat: 'datetime' };
+    const fm = buildFrontmatter(page, settings, fixedDate);
+    expect(fm).toContain('date: "2026-07-01 15:30:44"');
+  });
+
+  it('builds frontmatter with iso date format', () => {
+    const settings: ExtensionSettings = { ...DEFAULT_SETTINGS, dateFormat: 'iso' };
+    const fm = buildFrontmatter(page, settings, fixedDate);
+    expect(fm).toContain('date: "2026-07-01T15:30:44+08:00"');
+  });
+
+  it('builds frontmatter with author, description, and site', () => {
+    const settings: ExtensionSettings = {
+      ...DEFAULT_SETTINGS,
+      includeFrontmatterAuthor: true,
+      includeFrontmatterDescription: true,
+      includeFrontmatterSite: true,
+    };
+    const fm = buildFrontmatter(page, settings, fixedDate);
+    expect(fm).toContain('author: "John Doe"');
+    expect(fm).toContain('description: "An example page"');
+    expect(fm).toContain('site: "example.com"');
+  });
+
+  it('skips empty optional frontmatter fields', () => {
+    const settings: ExtensionSettings = {
+      ...DEFAULT_SETTINGS,
+      includeFrontmatterAuthor: true,
+      includeFrontmatterDescription: true,
+      includeFrontmatterSite: true,
+    };
+    const fm = buildFrontmatter(emptyPage, settings, fixedDate);
+    expect(fm).not.toContain('author:');
+    expect(fm).not.toContain('description:');
+    expect(fm).not.toContain('site:');
   });
 
   it('builds frontmatter with all fields disabled', () => {
@@ -89,37 +146,28 @@ describe('templates', () => {
       includeFrontmatterUrl: false,
       includeFrontmatterTags: false,
     };
-    const fm = buildFrontmatter('Note Title', page.url, disabled, fixedDate);
+    const fm = buildFrontmatter(page, disabled, fixedDate);
     expect(fm).toBe('');
   });
 
-  it('builds note content with title and url as linked heading', () => {
-    const content = buildNoteContent('my note', page, undefined, draft, DEFAULT_SETTINGS, fixedDate);
+  it('builds note content with only user content and frontmatter', () => {
+    const content = buildNoteContent('my note', page, draft, DEFAULT_SETTINGS, fixedDate);
     expect(content).toBe(
       '---\n' +
       'title: "Example Page"\n' +
-      'date: "2026-07-01T07:30:44.000Z"\n' +
+      'date: 2026-07-01\n' +
       'url: "https://example.com/path?x=1"\n' +
       'tags:\n' +
       '  - quick-note\n' +
       '---\n\n' +
-      '# [Example Page](https://example.com/path?x=1)\n' +
       'my note',
     );
   });
 
-  it('builds note content with title only', () => {
-    const titleOnlyDraft: Draft = { ...draft, includeUrl: false };
-    const content = buildNoteContent('my note', page, undefined, titleOnlyDraft, DEFAULT_SETTINGS, fixedDate);
-    expect(content).toContain('# Example Page');
-    expect(content).not.toContain(`# [Example Page](${page.url})`);
-  });
-
-  it('builds note content with url only', () => {
-    const urlOnlyDraft: Draft = { ...draft, includeTitle: false };
-    const content = buildNoteContent('my note', page, undefined, urlOnlyDraft, DEFAULT_SETTINGS, fixedDate);
-    expect(content).not.toContain('#');
-    expect(content).toContain('https://example.com/path?x=1');
+  it('does not insert title or url into body regardless of toggles', () => {
+    const content = buildNoteContent('my note', page, draft, DEFAULT_SETTINGS, fixedDate);
+    expect(content).not.toContain('# Example Page');
+    expect(content).toMatch(/---[\s\S]*---\n\nmy note$/);
   });
 
   it('builds note content with all frontmatter disabled', () => {
@@ -130,14 +178,24 @@ describe('templates', () => {
       includeFrontmatterUrl: false,
       includeFrontmatterTags: false,
     };
-    const content = buildNoteContent('my note', page, undefined, draft, disabled, fixedDate);
+    const content = buildNoteContent('my note', page, draft, disabled, fixedDate);
     expect(content).not.toContain('---');
-    expect(content).toContain('# [Example Page](https://example.com/path?x=1)');
+    expect(content).toBe('my note');
   });
 
-  it('builds note content with media', () => {
-    const content = buildNoteContent('my note', page, media, draft, DEFAULT_SETTINGS, fixedDate);
-    expect(content).toContain('> [Cool Video](https://example.com/video) @ 03:24');
+  it('formats frontmatter date as unquoted date-only by default', () => {
+    const result = formatFrontmatterDate(fixedDate, 'date');
+    expect(result).toEqual({ value: '2026-07-01', quoted: false });
+  });
+
+  it('formats frontmatter datetime as quoted string', () => {
+    const result = formatFrontmatterDate(fixedDate, 'datetime');
+    expect(result).toEqual({ value: '2026-07-01 15:30:44', quoted: true });
+  });
+
+  it('formats frontmatter iso as quoted string', () => {
+    const result = formatFrontmatterDate(fixedDate, 'iso');
+    expect(result).toEqual({ value: '2026-07-01T15:30:44+08:00', quoted: true });
   });
 
   it('resolves note path', () => {

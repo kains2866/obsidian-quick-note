@@ -26,3 +26,72 @@ fieldset {
 }
 .success { color: green; }
 .error { color: red; }
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+.guide {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #ddd;
+}
+.guide h2 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+.guide details {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+.guide summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+.guide ol,
+.guide ul {
+  margin: 0.5rem 0 0 1.25rem;
+  padding: 0;
+}
+.guide li {
+  margin-bottom: 0.4rem;
+  line-height: 1.5;
+}
+.guide code {
+  background: #eee;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-family: monospace;
+}
+.guide .warning {
+  color: #c0392b;
+  margin-top: 0.5rem;
+}
+.preview-box {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  background: #f0f7ff;
+  border: 1px solid #d0e3f7;
+  border-radius: 6px;
+}
+.preview-box strong {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: #333;
+}
+#save-path-preview {
+  font-family: monospace;
+  color: #555;
+  word-break: break-all;
+}
+#save-path-preview .warning {
+  color: #c0392b;
+}
+#save-path-preview .muted {
+  color: #888;
+}

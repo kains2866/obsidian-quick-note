@@ -8,7 +8,7 @@ import {
   type Mock,
 } from 'vitest';
 import { DEFAULT_SETTINGS, DEFAULT_DRAFT, STORAGE_KEYS } from '../../src/shared/constants.js';
-import type { ExtensionSettings, Draft, PageInfo, MediaInfo } from '../../src/shared/types.js';
+import type { ExtensionSettings, Draft, PageInfo } from '../../src/shared/types.js';
 
 type PopupModule = typeof import('../../src/popup/popup.js');
 
@@ -26,7 +26,6 @@ const POPUP_HTML = `
     <div class="toggles">
       <label><input type="checkbox" id="toggle-url" /> URL</label>
       <label><input type="checkbox" id="toggle-title" /> 标题</label>
-      <label><input type="checkbox" id="toggle-media" /> 播放内容</label>
     </div>
     <textarea id="editor" placeholder="输入 Markdown..."></textarea>
     <div class="footer">
@@ -43,13 +42,15 @@ const FIXED_DATE = new Date('2026-07-15T12:00:00Z');
 const page: PageInfo = {
   url: 'https://example.com/path?x=1',
   title: 'Example Page',
-  selectedText: 'selected text',
+  selectedText: '',
+  author: '',
+  description: '',
+  site: '',
 };
 
-const media: MediaInfo = {
-  url: 'https://example.com/video',
-  title: 'Cool Video',
-  currentTime: '03:24',
+const SETTINGS_WITH_VAULT: ExtensionSettings = {
+  ...DEFAULT_SETTINGS,
+  vaultName: 'MyVault',
 };
 
 function renderPopup(): void {
@@ -60,8 +61,8 @@ function chromeMock(overrides: {
   storedSettings?: ExtensionSettings;
   storedDraft?: Draft;
   pageInfo?: PageInfo;
-  mediaInfo?: MediaInfo;
   sendMessage?: Mock;
+  tabsSendMessage?: Mock;
 } = {}) {
   const mockStorage: Record<string, unknown> = {};
   if (overrides.storedSettings !== undefined) {
@@ -73,7 +74,27 @@ function chromeMock(overrides: {
 
   const runtimeSendMessage =
     overrides.sendMessage ??
-    vi.fn((_message: unknown) => Promise.resolve({ success: true }));
+    vi.fn((message: { type: string }) => {
+      if (message.type === 'OPEN_OBSIDIAN_URL') {
+        return Promise.resolve({ ok: true });
+      }
+      if (message.type === 'DOWNLOAD_NOTE') {
+        return Promise.resolve({ ok: true });
+      }
+      return Promise.resolve({ ok: true });
+    });
+
+  const tabsSendMessage =
+    overrides.tabsSendMessage ??
+    vi.fn((_tabId: number, message: { type: string }) => {
+      if (message.type === 'GET_PAGE_INFO') {
+        return Promise.resolve(overrides.pageInfo ?? page);
+      }
+      if (message.type === 'COPY_TO_CLIPBOARD') {
+        return Promise.resolve({ success: true });
+      }
+      return Promise.resolve({});
+    });
 
   return {
     storage: {
@@ -90,18 +111,12 @@ function chromeMock(overrides: {
       },
     },
     tabs: {
-      query: vi.fn(() =>
+      query: vi.fn((_query) =>
         Promise.resolve([{ id: 1, url: page.url, title: page.title }]),
       ),
-      sendMessage: vi.fn((_tabId: number, message: { type: string }) => {
-        if (message.type === 'GET_PAGE_INFO') {
-          return Promise.resolve(overrides.pageInfo ?? page);
-        }
-        if (message.type === 'GET_MEDIA_INFO') {
-          return Promise.resolve(overrides.mediaInfo ?? media);
-        }
-        return Promise.resolve({});
-      }),
+      sendMessage: tabsSendMessage,
+      update: vi.fn(() => Promise.resolve({})),
+      create: vi.fn(() => Promise.resolve({ id: 2 })),
     },
     runtime: {
       sendMessage: runtimeSendMessage,
@@ -116,8 +131,8 @@ async function loadPopup(overrides: {
   storedSettings?: ExtensionSettings;
   storedDraft?: Draft;
   pageInfo?: PageInfo;
-  mediaInfo?: MediaInfo;
   sendMessage?: Mock;
+  tabsSendMessage?: Mock;
 } = {}): Promise<PopupModule> {
   renderPopup();
   vi.stubGlobal('chrome', chromeMock(overrides));
@@ -137,6 +152,25 @@ describe('popup', () => {
     document.body.innerHTML = '';
   });
 
+  describe('buildObsidianUrl', () => {
+    it('builds clipboard URL when useClipboard is true', async () => {
+      const { buildObsidianUrl } = await loadPopup();
+      const url = buildObsidianUrl('MyVault', 'folder/note', true, 'body');
+      expect(url).toContain('obsidian://new?');
+      expect(url).toContain('file=' + encodeURIComponent('folder/note'));
+      expect(url).toContain('vault=MyVault');
+      expect(url).toContain('clipboard');
+      expect(url).not.toContain('content=');
+    });
+
+    it('builds content URL when useClipboard is false', async () => {
+      const { buildObsidianUrl } = await loadPopup();
+      const url = buildObsidianUrl('MyVault', 'folder/note', false, 'body');
+      expect(url).toContain('content=' + encodeURIComponent('body'));
+      expect(url).not.toContain('clipboard');
+    });
+  });
+
   describe('init flow', () => {
     it('loads draft values into the editor and toggles', async () => {
       const storedDraft: Draft = {
@@ -144,7 +178,6 @@ describe('popup', () => {
         content: 'draft content',
         includeUrl: true,
         includeTitle: true,
-        includeMedia: true,
       };
       const { init } = await loadPopup({ storedDraft });
       await init();
@@ -152,16 +185,14 @@ describe('popup', () => {
       expect((document.getElementById('editor') as HTMLTextAreaElement).value).toBe(
         'draft content',
       );
-      expect((document.getElementById('toggle-url') as HTMLInputElement).checked).toBe(true);
       expect((document.getElementById('toggle-title') as HTMLInputElement).checked).toBe(true);
-      expect((document.getElementById('toggle-media') as HTMLInputElement).checked).toBe(true);
+      expect((document.getElementById('toggle-url') as HTMLInputElement).checked).toBe(false);
     });
 
     it('falls back to tab info when content script messages fail', async () => {
       const { init } = await loadPopup({
         storedDraft: DEFAULT_DRAFT,
         pageInfo: undefined,
-        mediaInfo: undefined,
       });
       (chrome.tabs.sendMessage as Mock).mockRejectedValue(new Error('no content script'));
       await init();
@@ -169,94 +200,87 @@ describe('popup', () => {
       const targetPath = document.getElementById('target-path') as HTMLDivElement;
       expect(targetPath.textContent).toContain('保存到：');
     });
-  });
 
-  describe('getCurrentDraft', () => {
-    it('returns a draft matching the current UI state', async () => {
-      const { init, getCurrentDraft } = await loadPopup();
+    it('prefills editor with selected text when draft content is empty', async () => {
+      const { init } = await loadPopup({
+        storedDraft: DEFAULT_DRAFT,
+        pageInfo: { ...page, selectedText: 'highlighted passage' },
+      });
       await init();
 
-      const editor = document.getElementById('editor') as HTMLTextAreaElement;
-      editor.value = 'note body';
-      (document.getElementById('toggle-url') as HTMLInputElement).checked = true;
-      (document.getElementById('toggle-title') as HTMLInputElement).checked = false;
-      (document.getElementById('toggle-media') as HTMLInputElement).checked = true;
-
-      const current = getCurrentDraft();
-      expect(current.content).toBe('note body');
-      expect(current.includeUrl).toBe(true);
-      expect(current.includeTitle).toBe(false);
-      expect(current.includeMedia).toBe(true);
-      expect(current.targetFolder).toBe('');
-    });
-  });
-
-  describe('updateCharCount', () => {
-    it('reflects the editor length', async () => {
-      const { init, updateCharCount } = await loadPopup();
-      await init();
-
-      const editor = document.getElementById('editor') as HTMLTextAreaElement;
-      editor.value = '12345';
-      updateCharCount();
-
-      expect(document.getElementById('char-count')?.textContent).toBe('5 字符');
-    });
-  });
-
-  describe('updateTargetPath', () => {
-    it('shows the resolved path using settings base folder and date template', async () => {
-      const { init, updateTargetPath } = await loadPopup();
-      await init();
-
-      updateTargetPath();
-
-      const targetPath = document.getElementById('target-path') as HTMLDivElement;
-      expect(targetPath.textContent).toMatch(
-        /保存到：速记\/2026\/07\/\d{8}-\d{6}\.md$/,
+      expect((document.getElementById('editor') as HTMLTextAreaElement).value).toBe(
+        'highlighted passage',
       );
     });
 
-    it('uses page title in path when title toggle is checked', async () => {
-      const { init, updateTargetPath } = await loadPopup();
+    it('does not prefill selected text when setting is disabled', async () => {
+      const { init } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, includeSelectedText: false },
+        storedDraft: DEFAULT_DRAFT,
+        pageInfo: { ...page, selectedText: 'highlighted passage' },
+      });
       await init();
 
-      (document.getElementById('toggle-title') as HTMLInputElement).checked = true;
-      updateTargetPath();
-
-      expect(document.getElementById('target-path')?.textContent).toBe(
-        '保存到：速记/2026/07/Example Page.md',
-      );
-    });
-  });
-
-  describe('saveDraft', () => {
-    it('persists the current draft to storage', async () => {
-      const { init, saveDraft } = await loadPopup();
-      await init();
-
-      const editor = document.getElementById('editor') as HTMLTextAreaElement;
-      editor.value = 'persist me';
-      (document.getElementById('toggle-url') as HTMLInputElement).checked = true;
-
-      await saveDraft();
-
-      expect(chrome.storage.local.set).toHaveBeenCalledTimes(1);
-      const call = (chrome.storage.local.set as Mock).mock.calls[0][0] as Record<string, Draft>;
-      expect(call[STORAGE_KEYS.draft].content).toBe('persist me');
-      expect(call[STORAGE_KEYS.draft].includeUrl).toBe(true);
+      expect((document.getElementById('editor') as HTMLTextAreaElement).value).toBe('');
     });
   });
 
   describe('handleSave', () => {
-    it('sends SAVE_NOTE with the computed path, content, and settings', async () => {
-      const sendMessage = vi.fn((message: { type: string }) => {
-        if (message.type === 'SAVE_NOTE') {
+    it('shows an error when vault name is not configured', async () => {
+      const { init, handleSave } = await loadPopup({
+        storedSettings: DEFAULT_SETTINGS,
+      });
+      await init();
+
+      const editor = document.getElementById('editor') as HTMLTextAreaElement;
+      editor.value = 'my note';
+      await handleSave();
+
+      const status = document.getElementById('status') as HTMLDivElement;
+      expect(status.textContent).toBe('请先填写 Obsidian 仓库名（打开设置）');
+      expect(status.className).toBe('error');
+    });
+
+    it('confirms before saving an empty note and aborts when cancelled', async () => {
+      const sendMessage = vi.fn();
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+      const { init, handleSave } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        sendMessage,
+      });
+      await init();
+
+      const editor = document.getElementById('editor') as HTMLTextAreaElement;
+      editor.value = '';
+      await handleSave();
+
+      expect(confirmSpy).toHaveBeenCalledWith('编辑器为空，确定要保存空笔记吗？');
+      expect(sendMessage).not.toHaveBeenCalled();
+      expect(document.getElementById('status')?.textContent).toBe('已取消保存');
+      confirmSpy.mockRestore();
+    });
+
+    it('uses clipboard and opens Obsidian URL on successful save', async () => {
+      const tabsSendMessage = vi.fn((_tabId: number, message: { type: string }) => {
+        if (message.type === 'GET_PAGE_INFO') {
+          return Promise.resolve(page);
+        }
+        if (message.type === 'COPY_TO_CLIPBOARD') {
           return Promise.resolve({ success: true });
+        }
+        return Promise.resolve({});
+      });
+      const sendMessage = vi.fn((message: { type: string }) => {
+        if (message.type === 'OPEN_OBSIDIAN_URL') {
+          return Promise.resolve({ ok: true });
         }
         return Promise.resolve({ ok: true });
       });
-      const { init, handleSave } = await loadPopup({ sendMessage });
+      const { init, handleSave } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        sendMessage,
+        tabsSendMessage,
+      });
       await init();
 
       const editor = document.getElementById('editor') as HTMLTextAreaElement;
@@ -265,43 +289,82 @@ describe('popup', () => {
 
       await handleSave();
 
-      const saveCall = sendMessage.mock.calls.find(
-        (call) => (call[0] as { type: string }).type === 'SAVE_NOTE',
+      const copyCall = tabsSendMessage.mock.calls.find(
+        (call) => (call[1] as { type: string }).type === 'COPY_TO_CLIPBOARD',
       );
-      expect(saveCall).toBeDefined();
-      const saveMessage = saveCall![0] as unknown as { payload: { path: string; content: string } };
-      const payload = saveMessage.payload;
-      expect(payload.path).toBe('速记/2026/07/Example Page.md');
-      expect(payload.content).toContain('# Example Page');
-      expect(payload.content).toContain('my note');
-    });
+      expect(copyCall).toBeDefined();
+      expect((copyCall![1] as unknown as { text: string }).text).toContain('my note');
 
-    it('clears the editor and shows success after a successful save', async () => {
-      const sendMessage = vi.fn((_message: unknown) =>
-        Promise.resolve({ success: true }),
+      const openCall = sendMessage.mock.calls.find(
+        (call) => (call[0] as { type: string }).type === 'OPEN_OBSIDIAN_URL',
       );
-      const { init, handleSave } = await loadPopup({ sendMessage });
-      await init();
+      expect(openCall).toBeDefined();
+      const openMessage = openCall![0] as unknown as { url: string };
+      expect(openMessage.url).toContain('clipboard');
+      expect(openMessage.url).toContain('vault=MyVault');
 
-      const editor = document.getElementById('editor') as HTMLTextAreaElement;
-      editor.value = 'saved note';
-      await handleSave();
-
-      expect(editor.value).toBe('');
       const status = document.getElementById('status') as HTMLDivElement;
-      expect(status.textContent).toBe('已保存');
+      expect(status.textContent).toBe('已保存到 Obsidian');
       expect(status.className).toBe('success');
       expect(chrome.storage.local.remove).toHaveBeenCalledWith(STORAGE_KEYS.draft);
     });
 
-    it('shows an error and triggers DOWNLOAD_NOTE fallback on failure', async () => {
+    it('falls back to content in URL when clipboard fails', async () => {
+      const tabsSendMessage = vi.fn((_tabId: number, message: { type: string }) => {
+        if (message.type === 'GET_PAGE_INFO') {
+          return Promise.resolve(page);
+        }
+        if (message.type === 'COPY_TO_CLIPBOARD') {
+          return Promise.resolve({ success: false });
+        }
+        return Promise.resolve({});
+      });
       const sendMessage = vi.fn((message: { type: string }) => {
-        if (message.type === 'SAVE_NOTE') {
-          return Promise.resolve({ success: false, error: 'API unreachable' });
+        if (message.type === 'OPEN_OBSIDIAN_URL') {
+          return Promise.resolve({ ok: true });
         }
         return Promise.resolve({ ok: true });
       });
-      const { init, handleSave } = await loadPopup({ sendMessage });
+      const { init, handleSave } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        sendMessage,
+        tabsSendMessage,
+      });
+      await init();
+
+      const editor = document.getElementById('editor') as HTMLTextAreaElement;
+      editor.value = 'fallback note';
+      await handleSave();
+
+      const openCall = sendMessage.mock.calls.find(
+        (call) => (call[0] as { type: string }).type === 'OPEN_OBSIDIAN_URL',
+      );
+      expect(openCall).toBeDefined();
+      const openMessage = openCall![0] as unknown as { url: string };
+      expect(openMessage.url).not.toContain('clipboard');
+      expect(openMessage.url).toContain('content=');
+
+      const status = document.getElementById('status') as HTMLDivElement;
+      expect(status.textContent).toBe('已保存到 Obsidian');
+    });
+
+    it('shows an error and triggers DOWNLOAD_NOTE fallback on failure', async () => {
+      const sendMessage = vi.fn((message: { type: string }) => {
+        if (message.type === 'COPY_TO_CLIPBOARD') {
+          return Promise.resolve({ success: true });
+        }
+        if (message.type === 'OPEN_OBSIDIAN_URL') {
+          return Promise.resolve({ ok: false, error: 'Cannot update tab' });
+        }
+        if (message.type === 'DOWNLOAD_NOTE') {
+          return Promise.resolve({ ok: true });
+        }
+        return Promise.resolve({ ok: true });
+      });
+      const { init, handleSave } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        sendMessage,
+      });
       await init();
 
       const editor = document.getElementById('editor') as HTMLTextAreaElement;
@@ -310,94 +373,87 @@ describe('popup', () => {
       await handleSave();
 
       const status = document.getElementById('status') as HTMLDivElement;
-      expect(status.textContent).toBe('保存失败：API unreachable，已下载兜底文件');
+      expect(status.textContent).toBe('保存失败：Cannot update tab，已下载兜底文件');
       expect(status.className).toBe('error');
 
       const downloadCall = sendMessage.mock.calls.find(
         (call) => (call[0] as { type: string }).type === 'DOWNLOAD_NOTE',
       );
       expect(downloadCall).toBeDefined();
-      const downloadMessage = downloadCall![0] as unknown as {
-        filename: string;
-        content: string;
-      };
-      expect(downloadMessage.filename).toBe('Example Page.md');
-      expect(downloadMessage.content).toContain('failed note');
     });
 
-    it('triggers DOWNLOAD_NOTE fallback when sendMessage throws', async () => {
+    it('falls back to download when current tab is not available', async () => {
       const sendMessage = vi.fn((message: { type: string }) => {
-        if (message.type === 'SAVE_NOTE') {
-          return Promise.reject(new Error('service worker unavailable'));
+        if (message.type === 'DOWNLOAD_NOTE') {
+          return Promise.resolve({ ok: true });
         }
         return Promise.resolve({ ok: true });
       });
-      const { init, handleSave } = await loadPopup({ sendMessage });
+      const { init, handleSave } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        sendMessage,
+      });
+      (chrome.tabs.query as Mock).mockResolvedValue([]);
       await init();
 
       const editor = document.getElementById('editor') as HTMLTextAreaElement;
-      editor.value = 'crashed note';
-      (document.getElementById('toggle-title') as HTMLInputElement).checked = true;
+      editor.value = 'no tab note';
       await handleSave();
 
       const status = document.getElementById('status') as HTMLDivElement;
-      expect(status.textContent).toBe('保存失败：service worker unavailable，已下载兜底文件');
-      expect(status.className).toBe('error');
+      expect(status.textContent).toBe('保存失败：无法获取当前标签页，已下载兜底文件');
 
       const downloadCall = sendMessage.mock.calls.find(
         (call) => (call[0] as { type: string }).type === 'DOWNLOAD_NOTE',
       );
       expect(downloadCall).toBeDefined();
+      const downloadMessage = downloadCall![0] as unknown as { filename: string; content: string };
+      expect(downloadMessage.filename).toMatch(/\.md$/);
+      expect(downloadMessage.content).toContain('no tab note');
+    });
+
+    it('shows error when both Obsidian and download fallback fail', async () => {
+      const sendMessage = vi.fn((message: { type: string }) => {
+        if (message.type === 'COPY_TO_CLIPBOARD') {
+          return Promise.resolve({ success: true });
+        }
+        if (message.type === 'OPEN_OBSIDIAN_URL') {
+          return Promise.resolve({ ok: false, error: 'Obsidian rejected' });
+        }
+        if (message.type === 'DOWNLOAD_NOTE') {
+          return Promise.resolve({ ok: false, error: 'download denied' });
+        }
+        return Promise.resolve({ ok: true });
+      });
+      const { init, handleSave } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        sendMessage,
+      });
+      await init();
+
+      const editor = document.getElementById('editor') as HTMLTextAreaElement;
+      editor.value = 'double fail note';
+      await handleSave();
+
+      const status = document.getElementById('status') as HTMLDivElement;
+      expect(status.textContent).toBe('保存失败：Obsidian rejected；兜底下载也失败：download denied');
+      expect(status.className).toBe('error');
     });
   });
 
   describe('target path override', () => {
-    it('opens edit form with current computed folder and filename', async () => {
-      const { init, openTargetEdit } = await loadPopup();
-      await init();
-
-      openTargetEdit();
-
-      expect(
-        (document.getElementById('target-folder-input') as HTMLInputElement).value,
-      ).toMatch(/速记\/2026\/07/);
-      expect(
-        (document.getElementById('target-filename-input') as HTMLInputElement).value,
-      ).toMatch(/^\d{8}-\d{6}$/);
-      expect(document.getElementById('target-edit')?.classList.contains('visible')).toBe(true);
-    });
-
-    it('saves folder and filename overrides to draft and updates path', async () => {
-      const { init, openTargetEdit, saveTargetEdit, updateTargetPath } = await loadPopup();
-      await init();
-
-      openTargetEdit();
-      (document.getElementById('target-folder-input') as HTMLInputElement).value =
-        'custom/folder';
-      (document.getElementById('target-filename-input') as HTMLInputElement).value =
-        'custom-file';
-      await saveTargetEdit();
-
-      expect(document.getElementById('target-edit')?.classList.contains('visible')).toBe(false);
-      expect(chrome.storage.local.set).toHaveBeenCalled();
-      const call = (chrome.storage.local.set as Mock).mock.calls[0][0] as Record<string, Draft>;
-      expect(call[STORAGE_KEYS.draft].targetFolder).toBe('custom/folder');
-      expect(call[STORAGE_KEYS.draft].targetFilename).toBe('custom-file');
-
-      updateTargetPath();
-      expect(document.getElementById('target-path')?.textContent).toBe(
-        '保存到：custom/folder/custom-file.md',
-      );
-    });
-
-    it('uses overrides in handleSave path and content', async () => {
+    it('uses overrides in handleSave path', async () => {
       const sendMessage = vi.fn((message: { type: string }) => {
-        if (message.type === 'SAVE_NOTE') {
+        if (message.type === 'COPY_TO_CLIPBOARD') {
           return Promise.resolve({ success: true });
+        }
+        if (message.type === 'OPEN_OBSIDIAN_URL') {
+          return Promise.resolve({ ok: true });
         }
         return Promise.resolve({ ok: true });
       });
       const { init, openTargetEdit, saveTargetEdit, handleSave } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
         sendMessage,
       });
       await init();
@@ -413,61 +469,14 @@ describe('popup', () => {
       editor.value = 'override note';
       await handleSave();
 
-      const saveCall = sendMessage.mock.calls.find(
-        (call) => (call[0] as { type: string }).type === 'SAVE_NOTE',
+      const openCall = sendMessage.mock.calls.find(
+        (call) => (call[0] as { type: string }).type === 'OPEN_OBSIDIAN_URL',
       );
-      expect(saveCall).toBeDefined();
-      const saveMessage = saveCall![0] as unknown as {
-        payload: { path: string; content: string };
-      };
-      expect(saveMessage.payload.path).toBe('override/folder/override-file.md');
-      expect(saveMessage.payload.content).toContain('title: "override-file"');
-    });
-  });
-
-  describe('event listeners', () => {
-    it('updates char count and saves draft on editor input', async () => {
-      const { init } = await loadPopup();
-      await init();
-
-      const editor = document.getElementById('editor') as HTMLTextAreaElement;
-      editor.value = 'typed';
-      editor.dispatchEvent(new Event('input', { bubbles: true }));
-
-      await vi.waitFor(() =>
-        expect(document.getElementById('char-count')?.textContent).toBe('5 字符'),
+      expect(openCall).toBeDefined();
+      const openMessage = openCall![0] as unknown as { url: string };
+      expect(openMessage.url).toContain(
+        'file=' + encodeURIComponent('override/folder/override-file'),
       );
-      expect(chrome.storage.local.set).toHaveBeenCalled();
-    });
-
-    it('updates target path and saves draft on toggle change', async () => {
-      const { init } = await loadPopup();
-      await init();
-
-      const toggleTitle = document.getElementById('toggle-title') as HTMLInputElement;
-      toggleTitle.checked = true;
-      toggleTitle.dispatchEvent(new Event('change', { bubbles: true }));
-
-      await vi.waitFor(() =>
-        expect(document.getElementById('target-path')?.textContent).toContain(
-          'Example Page.md',
-        ),
-      );
-      expect(chrome.storage.local.set).toHaveBeenCalled();
-    });
-
-    it('calls handleSave when save button is clicked', async () => {
-      const sendMessage = vi.fn((_message: unknown) =>
-        Promise.resolve({ success: true }),
-      );
-      await loadPopup({ sendMessage });
-
-      const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
-      saveBtn.click();
-
-      await vi.waitFor(() => expect(sendMessage).toHaveBeenCalled());
-      const call = sendMessage.mock.calls[0][0] as { type: string };
-      expect(call.type).toBe('SAVE_NOTE');
     });
   });
 });

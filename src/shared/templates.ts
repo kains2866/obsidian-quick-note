@@ -1,4 +1,4 @@
-import type { ExtensionSettings, PageInfo, MediaInfo, Draft } from './types.js';
+import type { ExtensionSettings, PageInfo, Draft } from './types.js';
 import { MAX_FILENAME_LENGTH } from './constants.js';
 
 export function renderTemplate(template: string, date: Date): string {
@@ -54,21 +54,83 @@ export function generateFilename(
   return name;
 }
 
+export function formatDateWithOffset(
+  date: Date,
+  timezoneOffsetMinutes = date.getTimezoneOffset(),
+): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const offset = -timezoneOffsetMinutes;
+  const sign = offset >= 0 ? '+' : '-';
+  const offsetHours = pad(Math.floor(Math.abs(offset) / 60));
+  const offsetMinutes = pad(Math.abs(offset) % 60);
+
+  const shifted = new Date(date.getTime() - timezoneOffsetMinutes * 60 * 1000);
+
+  return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())}T${pad(shifted.getUTCHours())}:${pad(shifted.getUTCMinutes())}:${pad(shifted.getUTCSeconds())}${sign}${offsetHours}:${offsetMinutes}`;
+}
+
+function formatLocalDateTime(
+  date: Date,
+  timezoneOffsetMinutes = date.getTimezoneOffset(),
+): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const shifted = new Date(date.getTime() - timezoneOffsetMinutes * 60 * 1000);
+  return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())} ${pad(shifted.getUTCHours())}:${pad(shifted.getUTCMinutes())}:${pad(shifted.getUTCSeconds())}`;
+}
+
+function formatLocalDate(
+  date: Date,
+  timezoneOffsetMinutes = date.getTimezoneOffset(),
+): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const shifted = new Date(date.getTime() - timezoneOffsetMinutes * 60 * 1000);
+  return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())}`;
+}
+
+export function formatFrontmatterDate(
+  date: Date,
+  format: ExtensionSettings['dateFormat'],
+  timezoneOffsetMinutes = date.getTimezoneOffset(),
+): { value: string; quoted: boolean } {
+  switch (format) {
+    case 'date':
+      return { value: formatLocalDate(date, timezoneOffsetMinutes), quoted: false };
+    case 'datetime':
+      return { value: formatLocalDateTime(date, timezoneOffsetMinutes), quoted: true };
+    case 'iso':
+    default:
+      return { value: formatDateWithOffset(date, timezoneOffsetMinutes), quoted: true };
+  }
+}
+
+function escapeYamlValue(value: string): string {
+  return value.replace(/"/g, '\\"');
+}
+
 export function buildFrontmatter(
-  title: string,
-  url: string,
+  page: PageInfo,
   settings: ExtensionSettings,
   date = new Date(),
 ): string {
   const fields: string[] = [];
-  if (settings.includeFrontmatterTitle) {
-    fields.push(`title: "${title.replace(/"/g, '\\"')}"`);
+  if (settings.includeFrontmatterTitle && page.title) {
+    fields.push(`title: "${escapeYamlValue(page.title)}"`);
   }
   if (settings.includeFrontmatterDate) {
-    fields.push(`date: "${date.toISOString()}"`);
+    const formatted = formatFrontmatterDate(date, settings.dateFormat);
+    fields.push(formatted.quoted ? `date: "${formatted.value}"` : `date: ${formatted.value}`);
   }
-  if (settings.includeFrontmatterUrl && url) {
-    fields.push(`url: "${url.replace(/"/g, '\\"')}"`);
+  if (settings.includeFrontmatterUrl && page.url) {
+    fields.push(`url: "${escapeYamlValue(page.url)}"`);
+  }
+  if (settings.includeFrontmatterAuthor && page.author) {
+    fields.push(`author: "${escapeYamlValue(page.author)}"`);
+  }
+  if (settings.includeFrontmatterDescription && page.description) {
+    fields.push(`description: "${escapeYamlValue(page.description)}"`);
+  }
+  if (settings.includeFrontmatterSite && page.site) {
+    fields.push(`site: "${escapeYamlValue(page.site)}"`);
   }
   if (settings.includeFrontmatterTags && settings.defaultTags.length > 0) {
     fields.push('tags:\n' + settings.defaultTags.map((t) => `  - ${t}`).join('\n'));
@@ -80,37 +142,12 @@ export function buildFrontmatter(
 export function buildNoteContent(
   userContent: string,
   page: PageInfo,
-  media: MediaInfo | undefined,
   draft: Draft,
   settings: ExtensionSettings,
   date = new Date(),
 ): string {
-  const parts: string[] = [];
-
-  if (draft.includeTitle && page.title && draft.includeUrl && page.url) {
-    parts.push(`# [${page.title}](${page.url})`);
-  } else if (draft.includeTitle && page.title) {
-    parts.push(`# ${page.title}`);
-  } else if (draft.includeUrl && page.url) {
-    parts.push(page.url);
-  }
-
-  if (draft.includeMedia && media) {
-    parts.push(`> [${media.title}](${media.url}) @ ${media.currentTime}`);
-  }
-
-  if (parts.length > 0) {
-    parts.push('');
-  }
-
-  const fullContent = parts.join('\n') + userContent;
-  const frontmatter = buildFrontmatter(
-    draft.targetFilename || page.title || 'Quick Note',
-    page.url,
-    settings,
-    date,
-  );
-  return frontmatter + fullContent;
+  const frontmatter = buildFrontmatter(page, settings, date);
+  return frontmatter + userContent;
 }
 
 export function resolveNotePath(folder: string, filename: string): string {

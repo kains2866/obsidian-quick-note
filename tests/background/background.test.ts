@@ -1,101 +1,48 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { DEFAULT_SETTINGS } from '../../src/shared/constants.js';
 
-type BackgroundModule = typeof import('../../src/background/background.js');
-
-const mockFetch = vi.fn();
 const mockDownload = vi.fn();
-
-vi.stubGlobal('fetch', mockFetch);
+const mockTabsUpdate = vi.fn();
+const mockTabsQuery = vi.fn();
 
 beforeEach(() => {
-  mockFetch.mockReset();
   mockDownload.mockReset();
+  mockTabsUpdate.mockReset();
+  mockTabsQuery.mockReset();
 });
 
 afterEach(() => {
   vi.useRealTimers();
 });
 
-async function loadBackground(): Promise<BackgroundModule> {
+async function loadBackground() {
   vi.stubGlobal('chrome', {
     runtime: {
       onMessage: {
         addListener: vi.fn(),
       },
+      lastError: undefined,
     },
     downloads: {
       download: mockDownload,
     },
-  });
-  vi.stubGlobal('URL', {
-    createObjectURL: vi.fn(() => 'blob:mock-url'),
-    revokeObjectURL: vi.fn(),
+    tabs: {
+      update: mockTabsUpdate,
+      query: mockTabsQuery,
+    },
   });
   vi.resetModules();
   return import('../../src/background/background.js');
 }
 
-function abortWhenSignalled(init: RequestInit | undefined): Promise<Response> {
-  return new Promise((resolve, reject) => {
-    if (init?.signal?.aborted) {
-      const err = new Error('The operation was aborted');
-      err.name = 'AbortError';
-      reject(err);
-      return;
-    }
-    const onAbort = () => {
-      const err = new Error('The operation was aborted');
-      err.name = 'AbortError';
-      reject(err);
-    };
-    init?.signal?.addEventListener('abort', onAbort);
-  });
-}
-
-describe('background api', () => {
-  it('saves note successfully', async () => {
-    const { saveNoteToObsidian } = await loadBackground();
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, text: async () => '' });
-    const result = await saveNoteToObsidian(
-      { path: 'test/note.md', content: 'hello' },
-      DEFAULT_SETTINGS,
-    );
-    expect(result.success).toBe(true);
-    expect(mockFetch).toHaveBeenCalledWith(
-      'http://127.0.0.1:27123/vault/test/note.md',
-      expect.objectContaining({ method: 'POST' }),
-    );
-  });
-
-  it('returns error on 401', async () => {
-    const { saveNoteToObsidian } = await loadBackground();
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 401,
-      text: async () => 'Unauthorized',
-    });
-    const result = await saveNoteToObsidian(
-      { path: 'test/note.md', content: 'hello' },
-      DEFAULT_SETTINGS,
-    );
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('401');
-  });
-
-  it('tests connection', async () => {
-    const { testConnection } = await loadBackground();
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, text: async () => '{}' });
-    const ok = await testConnection(DEFAULT_SETTINGS);
-    expect(ok).toBe(true);
-  });
-
+describe('background', () => {
   it('downloads markdown file', async () => {
     const { downloadMarkdownFile } = await loadBackground();
-    downloadMarkdownFile('note.md', '# Hello');
+    mockDownload.mockImplementation((_options, callback) => callback?.(42));
+    const downloadId = await downloadMarkdownFile('note.md', '# Hello');
+    expect(downloadId).toBe(42);
     expect(mockDownload).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: 'blob:mock-url',
+        url: expect.stringMatching(/^data:text\/markdown/),
         filename: 'note.md',
         saveAs: false,
       }),
@@ -103,33 +50,33 @@ describe('background api', () => {
     );
   });
 
-  it('handles SAVE_NOTE message', async () => {
-    await loadBackground();
-    const addListener = (chrome.runtime.onMessage.addListener as ReturnType<typeof vi.fn>);
-    const listener = addListener.mock.calls[0][0];
-    const sendResponse = vi.fn();
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, text: async () => '' });
+  it('opens Obsidian URL in current tab', async () => {
+    const { openObsidianUrl } = await loadBackground();
+    mockTabsQuery.mockResolvedValue([{ id: 7, url: 'https://example.com' }]);
+    mockTabsUpdate.mockResolvedValue({});
 
-    const handled = listener(
-      { type: 'SAVE_NOTE', payload: { path: 'test.md', content: 'hi' }, settings: DEFAULT_SETTINGS },
-      {},
-      sendResponse,
-    );
+    await openObsidianUrl('obsidian://new?file=note');
 
-    expect(handled).toBe(true);
-    await vi.waitFor(() => expect(sendResponse).toHaveBeenCalled());
-    expect(sendResponse).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+    expect(mockTabsUpdate).toHaveBeenCalledWith(7, { url: 'obsidian://new?file=note' });
   });
 
-  it('handles TEST_CONNECTION message', async () => {
+  it('throws when no active tab is found', async () => {
+    const { openObsidianUrl } = await loadBackground();
+    mockTabsQuery.mockResolvedValue([]);
+
+    await expect(openObsidianUrl('obsidian://new?file=note')).rejects.toThrow('没有当前标签页');
+  });
+
+  it('handles OPEN_OBSIDIAN_URL message', async () => {
     await loadBackground();
     const addListener = (chrome.runtime.onMessage.addListener as ReturnType<typeof vi.fn>);
     const listener = addListener.mock.calls[0][0];
     const sendResponse = vi.fn();
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 200, text: async () => '{}' });
+    mockTabsQuery.mockResolvedValue([{ id: 7, url: 'https://example.com' }]);
+    mockTabsUpdate.mockResolvedValue({});
 
     const handled = listener(
-      { type: 'TEST_CONNECTION', settings: DEFAULT_SETTINGS },
+      { type: 'OPEN_OBSIDIAN_URL', url: 'obsidian://new?file=note' },
       {},
       sendResponse,
     );
@@ -144,6 +91,7 @@ describe('background api', () => {
     const addListener = (chrome.runtime.onMessage.addListener as ReturnType<typeof vi.fn>);
     const listener = addListener.mock.calls[0][0];
     const sendResponse = vi.fn();
+    mockDownload.mockImplementation((_options, callback) => callback?.(42));
 
     const handled = listener(
       { type: 'DOWNLOAD_NOTE', filename: 'note.md', content: '# Hello' },
@@ -152,71 +100,31 @@ describe('background api', () => {
     );
 
     expect(handled).toBe(true);
-    expect(mockDownload).toHaveBeenCalledWith(
-      expect.objectContaining({
-        filename: 'note.md',
-        saveAs: false,
-      }),
-      expect.any(Function),
-    );
+    await vi.waitFor(() => expect(sendResponse).toHaveBeenCalled());
+    expect(sendResponse).toHaveBeenCalledWith({ ok: true });
   });
 
-  it('retries on 409 conflict with incremented filename suffix', async () => {
-    const { saveNoteToObsidian } = await loadBackground();
-    mockFetch
-      .mockResolvedValueOnce({ ok: false, status: 409, text: async () => 'file exists' })
-      .mockResolvedValueOnce({ ok: true, status: 200, text: async () => '' });
+  it('returns error when DOWNLOAD_NOTE download fails', async () => {
+    await loadBackground();
+    const addListener = (chrome.runtime.onMessage.addListener as ReturnType<typeof vi.fn>);
+    const listener = addListener.mock.calls[0][0];
+    const sendResponse = vi.fn();
+    mockDownload.mockImplementation((_options, _callback) => {
+      (chrome.runtime as unknown as { lastError?: { message: string } }).lastError = {
+        message: 'Download failed',
+      };
+      if (_callback) _callback(undefined as unknown as number);
+      (chrome.runtime as unknown as { lastError?: { message: string } }).lastError = undefined;
+    });
 
-    const result = await saveNoteToObsidian(
-      { path: 'test/note.md', content: 'hello' },
-      DEFAULT_SETTINGS,
+    const handled = listener(
+      { type: 'DOWNLOAD_NOTE', filename: 'note.md', content: '# Hello' },
+      {},
+      sendResponse,
     );
 
-    expect(result.success).toBe(true);
-    expect(result.path).toBe('test/note-1.md');
-    expect(mockFetch).toHaveBeenCalledTimes(2);
-    expect(mockFetch).toHaveBeenNthCalledWith(
-      1,
-      'http://127.0.0.1:27123/vault/test/note.md',
-      expect.anything(),
-    );
-    expect(mockFetch).toHaveBeenNthCalledWith(
-      2,
-      'http://127.0.0.1:27123/vault/test/note-1.md',
-      expect.anything(),
-    );
-  });
-
-  it('gives up after 10 conflict retries', async () => {
-    const { saveNoteToObsidian } = await loadBackground();
-    for (let i = 0; i <= 10; i++) {
-      mockFetch.mockResolvedValueOnce({ ok: false, status: 409, text: async () => 'file exists' });
-    }
-
-    const result = await saveNoteToObsidian(
-      { path: 'test/note.md', content: 'hello' },
-      DEFAULT_SETTINGS,
-    );
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('409');
-    expect(mockFetch).toHaveBeenCalledTimes(11);
-  });
-
-  it('aborts fetch after 10 seconds and returns timeout error', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    mockFetch.mockImplementation((_url, init) => abortWhenSignalled(init));
-
-    const { saveNoteToObsidian } = await loadBackground();
-    const promise = saveNoteToObsidian(
-      { path: 'test/note.md', content: 'hello' },
-      DEFAULT_SETTINGS,
-    );
-
-    vi.advanceTimersByTime(10001);
-    const result = await promise;
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('timed out');
+    expect(handled).toBe(true);
+    await vi.waitFor(() => expect(sendResponse).toHaveBeenCalled());
+    expect(sendResponse).toHaveBeenCalledWith({ ok: false, error: 'Download failed' });
   });
 });
