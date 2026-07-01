@@ -14,11 +14,18 @@ product
 
 ## Brand Personality
 
-现代、活泼、友好。
+现代、活泼、友好、自然。
 
 - 现代：界面清爽，使用当下简洁的排版和控件。
 - 活泼：有适度的圆角、柔和的强调色，不沉闷。
 - 友好：文案直白，状态反馈清晰，对新手宽容。
+- 自然：以 Obsidian 截图中的鼠尾草绿 `#65b687` 作为主题色，呼应知识生长与笔记收藏的感受。
+
+## Color
+
+- Primary accent: `#65b687`（鼠尾草绿，用于主按钮、开关、焦点光环、链接）
+- Primary accent hover: `#4d946c`
+- Primary accent soft: `#e8f5ed`（用于信息卡片、高亮背景）
 
 ## Anti-references
 
