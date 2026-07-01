@@ -1,7 +1,11 @@
 export type Language = 'zh-CN' | 'en';
 
 export function getLanguage(): Language {
-  return navigator.language.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en';
+  const raw =
+    typeof chrome !== 'undefined' && chrome.i18n?.getUILanguage
+      ? chrome.i18n.getUILanguage()
+      : navigator.language;
+  return raw.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en';
 }
 
 export const messages: Record<Language, Record<string, string>> = {
