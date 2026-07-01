@@ -27,6 +27,21 @@ const POPUP_HTML = `
       <label><input type="checkbox" id="toggle-url" /> URL</label>
       <label><input type="checkbox" id="toggle-title" /> 标题</label>
     </div>
+    <div class="frontmatter-section" id="frontmatter-section">
+      <div class="frontmatter-header" id="frontmatter-header">
+        <span>Frontmatter</span>
+        <span class="frontmatter-summary" id="frontmatter-summary">...</span>
+      </div>
+      <div class="frontmatter-body" id="frontmatter-body">
+        <label><input type="checkbox" id="fm-title" /> title <span class="fm-value" id="fm-title-value"></span></label>
+        <label><input type="checkbox" id="fm-date" /> date <span class="fm-value" id="fm-date-value"></span></label>
+        <label><input type="checkbox" id="fm-url" /> url <span class="fm-value" id="fm-url-value"></span></label>
+        <label><input type="checkbox" id="fm-author" /> author <span class="fm-value" id="fm-author-value"></span></label>
+        <label><input type="checkbox" id="fm-description" /> description <span class="fm-value" id="fm-description-value"></span></label>
+        <label><input type="checkbox" id="fm-site" /> site <span class="fm-value" id="fm-site-value"></span></label>
+        <label><input type="checkbox" id="fm-tags" /> tags <span class="fm-value" id="fm-tags-value"></span></label>
+      </div>
+    </div>
     <textarea id="editor" placeholder="输入 Markdown..."></textarea>
     <div class="footer">
       <span id="char-count">0 字符</span>

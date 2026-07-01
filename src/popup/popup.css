@@ -75,3 +75,53 @@ textarea {
 }
 .success { color: green; }
 .error { color: red; }
+.frontmatter-section {
+  margin-bottom: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f9f9f9;
+}
+.frontmatter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #333;
+}
+.frontmatter-summary {
+  color: #888;
+  font-size: 11px;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.frontmatter-body {
+  display: none;
+  padding: 0 8px 8px;
+  font-size: 12px;
+}
+.frontmatter-body.visible {
+  display: block;
+}
+.frontmatter-body label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  cursor: pointer;
+}
+.frontmatter-body input[type="checkbox"] {
+  margin: 0;
+}
+.fm-value {
+  color: #888;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  text-align: right;
+}
