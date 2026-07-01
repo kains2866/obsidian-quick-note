@@ -168,7 +168,8 @@ export function renderFrontmatter(): void {
 
   FM_IDS.forEach((key) => {
     fmCheckboxes[key].checked = config[key];
-    fmValues[key].textContent = getFrontmatterValue(key);
+    const value = getFrontmatterValue(key);
+    fmValues[key].textContent = value || '—';
   });
 }
 
