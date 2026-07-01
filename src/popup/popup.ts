@@ -1,4 +1,5 @@
 import { getSettings, getDraft, setDraft, clearDraft } from '../shared/storage.js';
+import { DEFAULT_DRAFT } from '../shared/constants.js';
 import {
   renderTemplate,
   generateFilename,
@@ -303,7 +304,10 @@ export async function handleSave(): Promise<void> {
     if (result?.ok) {
       await clearDraft();
       editor.value = '';
-      draft = { ...draft, targetFolder: '', targetFilename: '', frontmatterOverrides: {} };
+      // Fully reset to the default draft so the next popup shows the default title-based filename.
+      draft = { ...DEFAULT_DRAFT };
+      toggleTitle.checked = draft.includeTitle;
+      toggleUrl.checked = draft.includeTitle ? false : draft.includeUrl;
       statusEl.textContent = t('savedToObsidian');
       statusEl.className = 'success';
       updateTargetPath();
