@@ -15,6 +15,14 @@ type PopupModule = typeof import('../../src/popup/popup.js');
 const POPUP_HTML = `
   <div class="popup">
     <div class="target-path" id="target-path">保存到：...</div>
+    <div class="target-edit" id="target-edit">
+      <label>文件夹 <input type="text" id="target-folder-input" placeholder="覆盖文件夹" /></label>
+      <label>文件名 <input type="text" id="target-filename-input" placeholder="覆盖文件名" /></label>
+      <div class="target-edit-actions">
+        <button id="target-edit-save" type="button">保存</button>
+        <button id="target-edit-cancel" type="button">取消</button>
+      </div>
+    </div>
     <div class="toggles">
       <label><input type="checkbox" id="toggle-url" /> URL</label>
       <label><input type="checkbox" id="toggle-title" /> 标题</label>
@@ -179,7 +187,7 @@ describe('popup', () => {
       expect(current.includeUrl).toBe(true);
       expect(current.includeTitle).toBe(false);
       expect(current.includeMedia).toBe(true);
-      expect(current.targetFolder).toBe(DEFAULT_SETTINGS.baseFolder);
+      expect(current.targetFolder).toBe('');
     });
   });
 
@@ -298,6 +306,7 @@ describe('popup', () => {
 
       const editor = document.getElementById('editor') as HTMLTextAreaElement;
       editor.value = 'failed note';
+      (document.getElementById('toggle-title') as HTMLInputElement).checked = true;
       await handleSave();
 
       const status = document.getElementById('status') as HTMLDivElement;
@@ -312,8 +321,107 @@ describe('popup', () => {
         filename: string;
         content: string;
       };
-      expect(downloadMessage.filename).toBe('failed note.md');
+      expect(downloadMessage.filename).toBe('Example Page.md');
       expect(downloadMessage.content).toContain('failed note');
+    });
+
+    it('triggers DOWNLOAD_NOTE fallback when sendMessage throws', async () => {
+      const sendMessage = vi.fn((message: { type: string }) => {
+        if (message.type === 'SAVE_NOTE') {
+          return Promise.reject(new Error('service worker unavailable'));
+        }
+        return Promise.resolve({ ok: true });
+      });
+      const { init, handleSave } = await loadPopup({ sendMessage });
+      await init();
+
+      const editor = document.getElementById('editor') as HTMLTextAreaElement;
+      editor.value = 'crashed note';
+      (document.getElementById('toggle-title') as HTMLInputElement).checked = true;
+      await handleSave();
+
+      const status = document.getElementById('status') as HTMLDivElement;
+      expect(status.textContent).toBe('保存失败：service worker unavailable，已下载兜底文件');
+      expect(status.className).toBe('error');
+
+      const downloadCall = sendMessage.mock.calls.find(
+        (call) => (call[0] as { type: string }).type === 'DOWNLOAD_NOTE',
+      );
+      expect(downloadCall).toBeDefined();
+    });
+  });
+
+  describe('target path override', () => {
+    it('opens edit form with current computed folder and filename', async () => {
+      const { init, openTargetEdit } = await loadPopup();
+      await init();
+
+      openTargetEdit();
+
+      expect(
+        (document.getElementById('target-folder-input') as HTMLInputElement).value,
+      ).toMatch(/速记\/2026\/07/);
+      expect(
+        (document.getElementById('target-filename-input') as HTMLInputElement).value,
+      ).toMatch(/^\d{8}-\d{6}$/);
+      expect(document.getElementById('target-edit')?.classList.contains('visible')).toBe(true);
+    });
+
+    it('saves folder and filename overrides to draft and updates path', async () => {
+      const { init, openTargetEdit, saveTargetEdit, updateTargetPath } = await loadPopup();
+      await init();
+
+      openTargetEdit();
+      (document.getElementById('target-folder-input') as HTMLInputElement).value =
+        'custom/folder';
+      (document.getElementById('target-filename-input') as HTMLInputElement).value =
+        'custom-file';
+      await saveTargetEdit();
+
+      expect(document.getElementById('target-edit')?.classList.contains('visible')).toBe(false);
+      expect(chrome.storage.local.set).toHaveBeenCalled();
+      const call = (chrome.storage.local.set as Mock).mock.calls[0][0] as Record<string, Draft>;
+      expect(call[STORAGE_KEYS.draft].targetFolder).toBe('custom/folder');
+      expect(call[STORAGE_KEYS.draft].targetFilename).toBe('custom-file');
+
+      updateTargetPath();
+      expect(document.getElementById('target-path')?.textContent).toBe(
+        '保存到：custom/folder/custom-file.md',
+      );
+    });
+
+    it('uses overrides in handleSave path and content', async () => {
+      const sendMessage = vi.fn((message: { type: string }) => {
+        if (message.type === 'SAVE_NOTE') {
+          return Promise.resolve({ success: true });
+        }
+        return Promise.resolve({ ok: true });
+      });
+      const { init, openTargetEdit, saveTargetEdit, handleSave } = await loadPopup({
+        sendMessage,
+      });
+      await init();
+
+      openTargetEdit();
+      (document.getElementById('target-folder-input') as HTMLInputElement).value =
+        'override/folder';
+      (document.getElementById('target-filename-input') as HTMLInputElement).value =
+        'override-file';
+      await saveTargetEdit();
+
+      const editor = document.getElementById('editor') as HTMLTextAreaElement;
+      editor.value = 'override note';
+      await handleSave();
+
+      const saveCall = sendMessage.mock.calls.find(
+        (call) => (call[0] as { type: string }).type === 'SAVE_NOTE',
+      );
+      expect(saveCall).toBeDefined();
+      const saveMessage = saveCall![0] as unknown as {
+        payload: { path: string; content: string };
+      };
+      expect(saveMessage.payload.path).toBe('override/folder/override-file.md');
+      expect(saveMessage.payload.content).toContain('title: "override-file"');
     });
   });
 

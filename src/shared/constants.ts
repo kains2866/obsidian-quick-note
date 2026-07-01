@@ -10,7 +10,6 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   includeFrontmatterUrl: true,
   includeFrontmatterTags: true,
   defaultTags: ['quick-note'],
-  ignoreCertErrors: false,
 };
 
 export const DEFAULT_DRAFT: Draft = {

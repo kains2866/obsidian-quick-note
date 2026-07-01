@@ -38,13 +38,13 @@ export function generateFilename(
     }
   }
 
-  if (!name && content) {
-    name = content.split('\n')[0].trim();
-  }
-
   if (!name) {
     const pad = (n: number) => n.toString().padStart(2, '0');
     name = `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+  }
+
+  if (!name && content) {
+    name = content.split('\n')[0].trim();
   }
 
   name = sanitizeFileName(name);
@@ -113,11 +113,7 @@ export function buildNoteContent(
   return frontmatter + fullContent;
 }
 
-export function resolveNotePath(
-  baseFolder: string,
-  dateSubfolder: string,
-  filename: string,
-): string {
-  const folder = [baseFolder, dateSubfolder].filter(Boolean).join('/');
-  return `${folder}/${filename}.md`;
+export function resolveNotePath(folder: string, filename: string): string {
+  const normalizedFolder = folder.replace(/\/$/, '');
+  return `${normalizedFolder}/${filename}.md`;
 }

@@ -14,7 +14,7 @@ npm install
 npm run build
 ```
 
-打开 Chrome → `chrome:///extensions` → 开启 **Developer mode** → **Load unpacked** → 选择 `dist/` 文件夹。
+打开 Chrome → `chrome://extensions` → 开启 **Developer mode** → **Load unpacked** → 选择 `dist/` 文件夹。
 
 ## 配置
 

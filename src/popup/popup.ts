@@ -12,6 +12,11 @@ const toggleUrl = document.getElementById('toggle-url') as HTMLInputElement;
 const toggleTitle = document.getElementById('toggle-title') as HTMLInputElement;
 const toggleMedia = document.getElementById('toggle-media') as HTMLInputElement;
 const targetPathEl = document.getElementById('target-path') as HTMLDivElement;
+const targetEditEl = document.getElementById('target-edit') as HTMLDivElement;
+const targetFolderInput = document.getElementById('target-folder-input') as HTMLInputElement;
+const targetFilenameInput = document.getElementById('target-filename-input') as HTMLInputElement;
+const targetEditSave = document.getElementById('target-edit-save') as HTMLButtonElement;
+const targetEditCancel = document.getElementById('target-edit-cancel') as HTMLButtonElement;
 const charCountEl = document.getElementById('char-count') as HTMLSpanElement;
 const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
@@ -43,13 +48,28 @@ export async function init(): Promise<void> {
   updateCharCount();
 }
 
+export function getComputedFolder(date = new Date()): string {
+  const dateSubfolder = renderTemplate(settings.dateSubfolderTemplate, date);
+  return [settings.baseFolder, dateSubfolder].filter(Boolean).join('/');
+}
+
+export function getComputedFilename(date = new Date()): string {
+  return generateFilename(
+    editor.value,
+    pageInfo,
+    toggleTitle.checked,
+    toggleUrl.checked,
+    date,
+  );
+}
+
 export function getCurrentDraft(): Draft {
   return {
     content: editor.value,
     includeUrl: toggleUrl.checked,
     includeTitle: toggleTitle.checked,
     includeMedia: toggleMedia.checked,
-    targetFolder: draft.targetFolder || settings.baseFolder,
+    targetFolder: draft.targetFolder,
     targetFilename: draft.targetFilename,
   };
 }
@@ -57,14 +77,9 @@ export function getCurrentDraft(): Draft {
 export function updateTargetPath(): void {
   const currentDraft = getCurrentDraft();
   const date = new Date();
-  const dateSubfolder = renderTemplate(settings.dateSubfolderTemplate, date);
-  const filename = generateFilename(
-    editor.value,
-    pageInfo,
-    currentDraft.includeTitle,
-    currentDraft.includeUrl,
-  );
-  const path = resolveNotePath(settings.baseFolder, dateSubfolder, filename);
+  const folder = currentDraft.targetFolder || getComputedFolder(date);
+  const filename = currentDraft.targetFilename || getComputedFilename(date);
+  const path = resolveNotePath(folder, filename);
   targetPathEl.textContent = `保存到：${path}`;
 }
 
@@ -83,30 +98,37 @@ export async function handleSave(): Promise<void> {
 
   const currentDraft = getCurrentDraft();
   const date = new Date();
-  const dateSubfolder = renderTemplate(settings.dateSubfolderTemplate, date);
-  const filename = generateFilename(
-    editor.value,
-    pageInfo,
-    currentDraft.includeTitle,
-    currentDraft.includeUrl,
-  );
-  const path = resolveNotePath(settings.baseFolder, dateSubfolder, filename);
-  const content = buildNoteContent(editor.value, pageInfo, mediaInfo, currentDraft, settings);
+  const folder = currentDraft.targetFolder || getComputedFolder(date);
+  const filename = currentDraft.targetFilename || getComputedFilename(date);
+  const path = resolveNotePath(folder, filename);
+  const content = buildNoteContent(editor.value, pageInfo, mediaInfo, currentDraft, settings, date);
 
-  const result = await chrome.runtime.sendMessage({
-    type: 'SAVE_NOTE',
-    payload: { path, content },
-    settings,
-  });
+  try {
+    const result = await chrome.runtime.sendMessage({
+      type: 'SAVE_NOTE',
+      payload: { path, content },
+      settings,
+    });
 
-  if (result.success) {
-    await clearDraft();
-    editor.value = '';
-    statusEl.textContent = '已保存';
-    statusEl.className = 'success';
-    updateTargetPath();
-  } else {
-    statusEl.textContent = `保存失败：${result.error}，已下载兜底文件`;
+    if (result?.success) {
+      await clearDraft();
+      editor.value = '';
+      draft = { ...draft, targetFolder: '', targetFilename: '' };
+      statusEl.textContent = '已保存';
+      statusEl.className = 'success';
+      updateTargetPath();
+    } else {
+      statusEl.textContent = `保存失败：${result?.error ?? '未知错误'}，已下载兜底文件`;
+      statusEl.className = 'error';
+      await chrome.runtime.sendMessage({
+        type: 'DOWNLOAD_NOTE',
+        filename: filename + '.md',
+        content,
+      });
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : '消息通道失败';
+    statusEl.textContent = `保存失败：${message}，已下载兜底文件`;
     statusEl.className = 'error';
     await chrome.runtime.sendMessage({
       type: 'DOWNLOAD_NOTE',
@@ -114,6 +136,29 @@ export async function handleSave(): Promise<void> {
       content,
     });
   }
+}
+
+export function openTargetEdit(): void {
+  const currentDraft = getCurrentDraft();
+  const date = new Date();
+  targetFolderInput.value = currentDraft.targetFolder || getComputedFolder(date);
+  targetFilenameInput.value = currentDraft.targetFilename || getComputedFilename(date);
+  targetEditEl.classList.add('visible');
+}
+
+export function closeTargetEdit(): void {
+  targetEditEl.classList.remove('visible');
+}
+
+export async function saveTargetEdit(): Promise<void> {
+  draft = {
+    ...getCurrentDraft(),
+    targetFolder: targetFolderInput.value.trim(),
+    targetFilename: targetFilenameInput.value.trim(),
+  };
+  await setDraft(draft);
+  updateTargetPath();
+  closeTargetEdit();
 }
 
 editor.addEventListener('input', () => {
@@ -127,5 +172,8 @@ editor.addEventListener('input', () => {
   });
 });
 saveBtn.addEventListener('click', handleSave);
+targetPathEl.addEventListener('click', openTargetEdit);
+targetEditSave.addEventListener('click', saveTargetEdit);
+targetEditCancel.addEventListener('click', closeTargetEdit);
 
 init();

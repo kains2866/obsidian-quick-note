@@ -58,13 +58,8 @@ describe('templates', () => {
     expect(filename).toBe('example.com-path');
   });
 
-  it('generates filename from content first line fallback', () => {
-    const filename = generateFilename('First line here\nsecond', { url: '', title: '', selectedText: '' }, false, false);
-    expect(filename).toBe('First line here');
-  });
-
-  it('generates filename from timestamp fallback', () => {
-    const filename = generateFilename('', undefined, false, false, fixedDate);
+  it('generates filename from timestamp fallback before content first line', () => {
+    const filename = generateFilename('First line here\nsecond', { url: '', title: '', selectedText: '' }, false, false, fixedDate);
     expect(filename).toBe('20260701-153044');
   });
 
@@ -141,7 +136,7 @@ describe('templates', () => {
   });
 
   it('resolves note path', () => {
-    const path = resolveNotePath('速记', '2026/07', 'my-file');
+    const path = resolveNotePath('速记/2026/07', 'my-file');
     expect(path).toBe('速记/2026/07/my-file.md');
   });
 });

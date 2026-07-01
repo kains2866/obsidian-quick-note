@@ -44,5 +44,4 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   } else if (request.type === 'GET_MEDIA_INFO') {
     sendResponse(getMediaInfo());
   }
-  return true;
 });

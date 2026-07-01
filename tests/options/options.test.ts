@@ -25,7 +25,6 @@ const FORM_HTML = `
     <input type="checkbox" id="fm-url" />
     <input type="checkbox" id="fm-tags" />
     <input type="text" id="default-tags" value="quick-note" />
-    <input type="checkbox" id="ignore-cert" />
     <button type="submit">保存设置</button>
   </form>
 `;
@@ -153,15 +152,6 @@ describe('options page', () => {
       expect(settings.includeFrontmatterTags).toBe(false);
     });
 
-    it('maps ignore-cert checkbox to ignoreCertErrors boolean', async () => {
-      const { readSettings } = await loadOptions();
-
-      (document.getElementById('ignore-cert') as HTMLInputElement).checked = true;
-
-      const settings = readSettings();
-
-      expect(settings.ignoreCertErrors).toBe(true);
-    });
   });
 
   describe('loadSettings flow', () => {
@@ -196,9 +186,6 @@ describe('options page', () => {
       expect(
         (document.getElementById('default-tags') as HTMLInputElement).value,
       ).toBe(DEFAULT_SETTINGS.defaultTags.join(', '));
-      expect(
-        (document.getElementById('ignore-cert') as HTMLInputElement).checked,
-      ).toBe(DEFAULT_SETTINGS.ignoreCertErrors);
     });
   });
 
@@ -299,7 +286,6 @@ describe('options page', () => {
       (
         document.getElementById('default-tags') as HTMLInputElement
       ).value = 'submitted, tags';
-      (document.getElementById('ignore-cert') as HTMLInputElement).checked = true;
 
       const expected = readSettings();
       const form = document.getElementById('settings-form') as HTMLFormElement;

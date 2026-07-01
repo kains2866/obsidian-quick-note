@@ -8,7 +8,6 @@ export interface ExtensionSettings {
   includeFrontmatterUrl: boolean;
   includeFrontmatterTags: boolean;
   defaultTags: string[];
-  ignoreCertErrors: boolean;
 }
 
 export interface Draft {

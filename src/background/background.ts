@@ -1,5 +1,8 @@
 import type { ExtensionSettings, SaveNoteRequest, SaveResult } from '../shared/types.js';
 
+const FETCH_TIMEOUT_MS = 10000;
+const MAX_CONFLICT_RETRIES = 10;
+
 function buildApiUrl(path: string, settings: ExtensionSettings): string {
   const base = settings.apiUrl.replace(/\/$/, '');
   const encodedPath = path.split('/').map(encodeURIComponent).join('/');
@@ -18,24 +21,55 @@ function buildFetchInit(settings: ExtensionSettings): RequestInit {
   };
 }
 
+function withConflictSuffix(path: string, attempt: number): string {
+  const lastSlash = path.lastIndexOf('/');
+  const folder = path.slice(0, lastSlash + 1);
+  const filename = path.slice(lastSlash + 1);
+  const extIndex = filename.lastIndexOf('.');
+  const stem = extIndex > 0 ? filename.slice(0, extIndex) : filename;
+  const ext = extIndex > 0 ? filename.slice(extIndex) : '';
+  return `${folder}${stem}-${attempt}${ext}`;
+}
+
 export async function saveNoteToObsidian(
   request: SaveNoteRequest,
   settings: ExtensionSettings,
 ): Promise<SaveResult> {
-  try {
-    const url = buildApiUrl(request.path, settings);
+  let path = request.path;
+
+  for (let attempt = 0; attempt <= MAX_CONFLICT_RETRIES; attempt++) {
+    const url = buildApiUrl(path, settings);
     const init = buildFetchInit(settings);
     init.body = request.content;
 
-    const response = await fetch(url, init);
-    if (response.ok) {
-      return { success: true, path: request.path };
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    init.signal = controller.signal;
+
+    try {
+      const response = await fetch(url, init);
+      if (response.ok) {
+        return { success: true, path };
+      }
+
+      if (response.status === 409 && attempt < MAX_CONFLICT_RETRIES) {
+        path = withConflictSuffix(request.path, attempt + 1);
+        continue;
+      }
+
+      const text = await response.text().catch(() => '');
+      return { success: false, error: `Obsidian API error ${response.status}: ${text}` };
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return { success: false, error: 'Network error: request timed out' };
+      }
+      return { success: false, error: `Network error: ${(err as Error).message}` };
+    } finally {
+      clearTimeout(timeoutId);
     }
-    const text = await response.text().catch(() => '');
-    return { success: false, error: `Obsidian API error ${response.status}: ${text}` };
-  } catch (err) {
-    return { success: false, error: `Network error: ${(err as Error).message}` };
   }
+
+  return { success: false, error: 'Obsidian API error 409: max retries exceeded' };
 }
 
 export async function testConnection(settings: ExtensionSettings): Promise<boolean> {

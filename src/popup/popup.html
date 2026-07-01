@@ -8,6 +8,14 @@
 <body>
   <div class="popup">
     <div class="target-path" id="target-path">保存到：...</div>
+    <div class="target-edit" id="target-edit">
+      <label>文件夹 <input type="text" id="target-folder-input" placeholder="覆盖文件夹" /></label>
+      <label>文件名 <input type="text" id="target-filename-input" placeholder="覆盖文件名" /></label>
+      <div class="target-edit-actions">
+        <button id="target-edit-save" type="button">保存</button>
+        <button id="target-edit-cancel" type="button">取消</button>
+      </div>
+    </div>
     <div class="toggles">
       <label><input type="checkbox" id="toggle-url" /> URL</label>
       <label><input type="checkbox" id="toggle-title" /> 标题</label>

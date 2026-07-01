@@ -15,7 +15,6 @@ export async function loadSettings(): Promise<void> {
   $('fm-url').checked = settings.includeFrontmatterUrl;
   $('fm-tags').checked = settings.includeFrontmatterTags;
   $('default-tags').value = settings.defaultTags.join(', ');
-  $('ignore-cert').checked = settings.ignoreCertErrors;
 }
 
 export function readSettings(): ExtensionSettings {
@@ -29,7 +28,6 @@ export function readSettings(): ExtensionSettings {
     includeFrontmatterUrl: $('fm-url').checked,
     includeFrontmatterTags: $('fm-tags').checked,
     defaultTags: $('default-tags').value.split(',').map((t) => t.trim()).filter(Boolean),
-    ignoreCertErrors: $('ignore-cert').checked,
   };
 }
 
