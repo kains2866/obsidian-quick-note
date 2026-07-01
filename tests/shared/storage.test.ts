@@ -43,7 +43,7 @@ describe('storage', () => {
 
   it('returns default draft when none stored', async () => {
     const draft = await getDraft();
-    expect(draft).toEqual(DEFAULT_DRAFT);
+    expect(draft).toEqual({ ...DEFAULT_DRAFT, frontmatterOverrides: {} });
   });
 
   it('saves and retrieves draft', async () => {
