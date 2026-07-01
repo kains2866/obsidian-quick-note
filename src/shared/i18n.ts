@@ -68,7 +68,7 @@ export const messages: Record<Language, Record<string, string>> = {
     dateTemplateEmptyHint: '日期子目录模板为空，不创建日期子目录',
 
     // footer
-    footerMadeBy: '用 ❤️ 制作',
+    footerMadeBy: 'Made by',
     footerEmail: '邮件反馈',
     supportDeveloper: '☕ 支持开发者',
     supportQrHint: '如果这款工具帮到了你，可以扫码请作者喝杯咖啡 ☕',
@@ -158,7 +158,7 @@ export const messages: Record<Language, Record<string, string>> = {
     dateTemplateEmptyHint: 'Date subfolder template is empty; no date subfolder will be created',
 
     // footer
-    footerMadeBy: 'Made with ❤️ by',
+    footerMadeBy: 'Made by',
     footerEmail: 'Email',
     supportDeveloper: '☕ Support developer',
     supportQrHint: 'If this tool helps, buy the author a coffee ☕',
