@@ -67,6 +67,13 @@ export const messages: Record<Language, Record<string, string>> = {
     baseFolderEmptyHint: '默认保存文件夹为空，将保存到仓库根目录',
     dateTemplateEmptyHint: '日期子目录模板为空，不创建日期子目录',
 
+    // footer
+    footerMadeBy: '用 ❤️ 制作',
+    footerEmail: '邮件反馈',
+    supportDeveloper: '☕ 支持开发者',
+    supportQrHint: '如果这款工具帮到了你，可以扫码请作者喝杯咖啡 ☕',
+    supportQrPlaceholder: '收款码占位图\n请替换为微信/支付宝收款码',
+
     // guide
     guideTitle: '使用指引与常见问题',
     guideVaultNameSummary: 'Obsidian 仓库名',
@@ -150,6 +157,13 @@ export const messages: Record<Language, Record<string, string>> = {
     exampleVaultName: 'MyVault',
     baseFolderEmptyHint: 'Default save folder is empty; file will be saved to vault root',
     dateTemplateEmptyHint: 'Date subfolder template is empty; no date subfolder will be created',
+
+    // footer
+    footerMadeBy: 'Made with ❤️ by',
+    footerEmail: 'Email',
+    supportDeveloper: '☕ Support developer',
+    supportQrHint: 'If this tool helps, buy the author a coffee ☕',
+    supportQrPlaceholder: 'QR code placeholder\nReplace with WeChat/Alipay QR code',
 
     // guide
     guideTitle: 'Guide & FAQ',
