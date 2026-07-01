@@ -494,4 +494,91 @@ describe('popup', () => {
       );
     });
   });
+
+  describe('frontmatter section', () => {
+    it('renders summary of enabled fields by default', async () => {
+      const { init } = await loadPopup({ storedSettings: SETTINGS_WITH_VAULT });
+      await init();
+      const summary = document.getElementById('frontmatter-summary') as HTMLSpanElement;
+      expect(summary.textContent).toContain('title');
+      expect(summary.textContent).toContain('url');
+    });
+
+    it('expands and collapses on header click', async () => {
+      const { init } = await loadPopup({ storedSettings: SETTINGS_WITH_VAULT });
+      await init();
+      const header = document.getElementById('frontmatter-header') as HTMLDivElement;
+      const body = document.getElementById('frontmatter-body') as HTMLDivElement;
+      expect(body.classList.contains('visible')).toBe(false);
+      header.click();
+      expect(body.classList.contains('visible')).toBe(true);
+      header.click();
+      expect(body.classList.contains('visible')).toBe(false);
+    });
+
+    it('shows actual field values when expanded', async () => {
+      const { init } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        pageInfo: { ...page, author: 'John Doe' },
+      });
+      await init();
+      document.getElementById('frontmatter-header')?.click();
+      expect((document.getElementById('fm-url-value') as HTMLSpanElement).textContent).toBe(page.url);
+      expect((document.getElementById('fm-author-value') as HTMLSpanElement).textContent).toBe('John Doe');
+    });
+
+    it('saves frontmatter overrides when toggling checkboxes', async () => {
+      const { init } = await loadPopup({ storedSettings: SETTINGS_WITH_VAULT });
+      await init();
+      document.getElementById('frontmatter-header')?.click();
+      const titleCheckbox = document.getElementById('fm-title') as HTMLInputElement;
+      titleCheckbox.checked = false;
+      titleCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+      await vi.waitFor(() => {
+        expect(chrome.storage.local.set).toHaveBeenCalled();
+      });
+
+      const lastCall = (chrome.storage.local.set as Mock).mock.calls.at(-1);
+      const savedDraft = lastCall[0]['oqn:draft'] as Draft;
+      expect(savedDraft.frontmatterOverrides).toEqual({ title: false });
+    });
+
+    it('uses overrides when saving note', async () => {
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        frontmatterOverrides: { title: false },
+      };
+      const sendMessage = vi.fn((message: { type: string }) => {
+        if (message.type === 'OPEN_OBSIDIAN_URL') return Promise.resolve({ ok: true });
+        return Promise.resolve({ ok: true });
+      });
+      const tabsSendMessage = vi.fn((_tabId: number, message: { type: string }) => {
+        if (message.type === 'GET_PAGE_INFO') return Promise.resolve(page);
+        if (message.type === 'COPY_TO_CLIPBOARD') return Promise.resolve({ success: false });
+        return Promise.resolve({});
+      });
+      const { init, handleSave } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        storedDraft,
+        sendMessage,
+        tabsSendMessage,
+      });
+      await init();
+
+      const editor = document.getElementById('editor') as HTMLTextAreaElement;
+      editor.value = 'note body';
+      await handleSave();
+
+      const openCall = sendMessage.mock.calls.find(
+        (call) => (call[0] as { type: string }).type === 'OPEN_OBSIDIAN_URL',
+      );
+      expect(openCall).toBeDefined();
+      const url = (openCall![0] as unknown as { url: string }).url;
+      expect(url).toContain('content=');
+      const contentParam = decodeURIComponent(url.split('content=')[1].split('&')[0]);
+      expect(contentParam).toContain('note body');
+      expect(contentParam).not.toContain('title:');
+    });
+  });
 });

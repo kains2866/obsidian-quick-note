@@ -5,7 +5,7 @@ import {
   buildNoteContent,
   resolveNotePath,
 } from '../shared/templates.js';
-import type { PageInfo, Draft, ExtensionSettings } from '../shared/types.js';
+import type { PageInfo, Draft, ExtensionSettings, FrontmatterKey } from '../shared/types.js';
 
 const editor = document.getElementById('editor') as HTMLTextAreaElement;
 const toggleUrl = document.getElementById('toggle-url') as HTMLInputElement;
@@ -19,6 +19,39 @@ const targetEditCancel = document.getElementById('target-edit-cancel') as HTMLBu
 const charCountEl = document.getElementById('char-count') as HTMLSpanElement;
 const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
+
+const frontmatterHeader = document.getElementById('frontmatter-header') as HTMLDivElement;
+const frontmatterBody = document.getElementById('frontmatter-body') as HTMLDivElement;
+const frontmatterSummary = document.getElementById('frontmatter-summary') as HTMLSpanElement;
+
+const FM_IDS: FrontmatterKey[] = ['title', 'date', 'url', 'author', 'description', 'site', 'tags'];
+const DEFAULT_FM_MAP: Record<FrontmatterKey, keyof ExtensionSettings> = {
+  title: 'includeFrontmatterTitle',
+  date: 'includeFrontmatterDate',
+  url: 'includeFrontmatterUrl',
+  author: 'includeFrontmatterAuthor',
+  description: 'includeFrontmatterDescription',
+  site: 'includeFrontmatterSite',
+  tags: 'includeFrontmatterTags',
+};
+const fmCheckboxes: Record<FrontmatterKey, HTMLInputElement> = {
+  title: document.getElementById('fm-title') as HTMLInputElement,
+  date: document.getElementById('fm-date') as HTMLInputElement,
+  url: document.getElementById('fm-url') as HTMLInputElement,
+  author: document.getElementById('fm-author') as HTMLInputElement,
+  description: document.getElementById('fm-description') as HTMLInputElement,
+  site: document.getElementById('fm-site') as HTMLInputElement,
+  tags: document.getElementById('fm-tags') as HTMLInputElement,
+};
+const fmValues: Record<FrontmatterKey, HTMLSpanElement> = {
+  title: document.getElementById('fm-title-value') as HTMLSpanElement,
+  date: document.getElementById('fm-date-value') as HTMLSpanElement,
+  url: document.getElementById('fm-url-value') as HTMLSpanElement,
+  author: document.getElementById('fm-author-value') as HTMLSpanElement,
+  description: document.getElementById('fm-description-value') as HTMLSpanElement,
+  site: document.getElementById('fm-site-value') as HTMLSpanElement,
+  tags: document.getElementById('fm-tags-value') as HTMLSpanElement,
+};
 
 let settings: ExtensionSettings;
 let pageInfo: PageInfo = {
@@ -59,6 +92,7 @@ export async function init(): Promise<void> {
 
   updateTargetPath();
   updateCharCount();
+  renderFrontmatter();
 }
 
 export function getComputedFolder(date = new Date()): string {
@@ -83,7 +117,68 @@ export function getCurrentDraft(): Draft {
     includeTitle: toggleTitle.checked,
     targetFolder: draft.targetFolder,
     targetFilename: draft.targetFilename,
+    frontmatterOverrides: draft.frontmatterOverrides,
   };
+}
+
+export function getFrontmatterConfig(): Record<FrontmatterKey, boolean> {
+  return {
+    title: draft.frontmatterOverrides?.title ?? settings.includeFrontmatterTitle,
+    date: draft.frontmatterOverrides?.date ?? settings.includeFrontmatterDate,
+    url: draft.frontmatterOverrides?.url ?? settings.includeFrontmatterUrl,
+    author: draft.frontmatterOverrides?.author ?? settings.includeFrontmatterAuthor,
+    description: draft.frontmatterOverrides?.description ?? settings.includeFrontmatterDescription,
+    site: draft.frontmatterOverrides?.site ?? settings.includeFrontmatterSite,
+    tags: draft.frontmatterOverrides?.tags ?? settings.includeFrontmatterTags,
+  };
+}
+
+export function getFrontmatterValue(key: FrontmatterKey, date = new Date()): string {
+  switch (key) {
+    case 'title':
+      return pageInfo.title || '';
+    case 'date':
+      return date.toLocaleString();
+    case 'url':
+      return pageInfo.url || '';
+    case 'author':
+      return pageInfo.author || '';
+    case 'description':
+      return pageInfo.description || '';
+    case 'site':
+      return pageInfo.site || '';
+    case 'tags':
+      return settings.defaultTags.join(', ');
+    default:
+      return '';
+  }
+}
+
+export function renderFrontmatter(): void {
+  const config = getFrontmatterConfig();
+  const enabledKeys = FM_IDS.filter((key) => config[key]);
+  frontmatterSummary.textContent = enabledKeys.length > 0 ? enabledKeys.join(', ') : '无';
+
+  FM_IDS.forEach((key) => {
+    fmCheckboxes[key].checked = config[key];
+    fmValues[key].textContent = getFrontmatterValue(key);
+  });
+}
+
+export function toggleFrontmatterBody(): void {
+  frontmatterBody.classList.toggle('visible');
+}
+
+async function saveFrontmatterOverride(key: FrontmatterKey, value: boolean): Promise<void> {
+  const defaultValue = settings[DEFAULT_FM_MAP[key]] as boolean;
+  const currentOverrides = { ...draft.frontmatterOverrides };
+  if (value === defaultValue) {
+    delete currentOverrides[key];
+  } else {
+    currentOverrides[key] = value;
+  }
+  draft = { ...draft, frontmatterOverrides: currentOverrides };
+  await saveDraft();
 }
 
 export function updateTargetPath(): void {
@@ -255,5 +350,14 @@ saveBtn.addEventListener('click', handleSave);
 targetPathEl.addEventListener('click', openTargetEdit);
 targetEditSave.addEventListener('click', saveTargetEdit);
 targetEditCancel.addEventListener('click', closeTargetEdit);
+
+frontmatterHeader.addEventListener('click', toggleFrontmatterBody);
+
+FM_IDS.forEach((key) => {
+  fmCheckboxes[key].addEventListener('change', async () => {
+    await saveFrontmatterOverride(key, fmCheckboxes[key].checked);
+    renderFrontmatter();
+  });
+});
 
 init();
