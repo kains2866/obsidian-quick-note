@@ -73,11 +73,6 @@ export function updateSavePathPreview(): void {
   const baseFolder = $('base-folder').value.trim();
   const dateTemplate = $('date-template').value.trim();
 
-  if (!vaultName) {
-    previewEl.innerHTML = `<span class="warning">${t('savePathPreviewPlaceholder')}</span>`;
-    return;
-  }
-
   const parts: string[] = [];
 
   if (baseFolder) {
@@ -97,12 +92,16 @@ export function updateSavePathPreview(): void {
 
   parts.push(t('exampleNote'));
 
-  let html = `<strong>${vaultName}</strong>`;
+  const displayVault = vaultName || t('exampleVaultName');
+  let html = `<strong>${displayVault}</strong>`;
   if (parts.length > 0) {
     html += ' / ' + parts.join(' / ');
   }
 
   const hints: string[] = [];
+  if (!vaultName) {
+    hints.push(t('savePathPreviewPlaceholder'));
+  }
   if (!baseFolder) {
     hints.push(t('baseFolderEmptyHint'));
   }
@@ -133,7 +132,15 @@ document.getElementById('settings-form')?.addEventListener('submit', async (e) =
 
 localizePage();
 localizePlaceholders();
-loadSettings().then(() => {
-  updateSavePathPreview();
-});
+// Render an initial preview immediately using the default form values,
+// then refresh once stored settings are loaded.
+updateSavePathPreview();
+loadSettings()
+  .then(() => {
+    updateSavePathPreview();
+  })
+  .catch(() => {
+    // In non-extension contexts (e.g. local dev server) chrome may be unavailable.
+    updateSavePathPreview();
+  });
 loadCurrentShortcut();

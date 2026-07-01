@@ -283,7 +283,7 @@ describe('options page', () => {
   });
 
   describe('save path preview', () => {
-    it('shows warning when vault name is empty', async () => {
+    it('shows example path with a hint when vault name is empty', async () => {
       await loadOptions();
       (document.getElementById('vault-name') as HTMLInputElement).value = '';
 
@@ -292,7 +292,8 @@ describe('options page', () => {
 
       const previewEl = document.getElementById('save-path-preview') as HTMLDivElement;
       expect(previewEl.textContent).toContain(t('savePathPreviewPlaceholder'));
-      expect(previewEl.innerHTML).toContain('warning');
+      expect(previewEl.textContent).toContain(t('exampleVaultName'));
+      expect(previewEl.innerHTML).toContain('muted');
     });
 
     it('renders full path when all fields are filled', async () => {

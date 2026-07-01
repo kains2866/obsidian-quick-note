@@ -63,6 +63,7 @@ export const messages: Record<Language, Record<string, string>> = {
     shortcutLoading: '当前快捷键：读取中…',
     dateTemplateError: '（日期模板格式错误）',
     exampleNote: '示例笔记.md',
+    exampleVaultName: 'MyVault',
     baseFolderEmptyHint: '默认保存文件夹为空，将保存到仓库根目录',
     dateTemplateEmptyHint: '日期子目录模板为空，不创建日期子目录',
 
@@ -146,6 +147,7 @@ export const messages: Record<Language, Record<string, string>> = {
     shortcutLoading: 'Current shortcut: loading…',
     dateTemplateError: '(date template format error)',
     exampleNote: 'example-note.md',
+    exampleVaultName: 'MyVault',
     baseFolderEmptyHint: 'Default save folder is empty; file will be saved to vault root',
     dateTemplateEmptyHint: 'Date subfolder template is empty; no date subfolder will be created',
 

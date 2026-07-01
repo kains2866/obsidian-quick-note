@@ -498,6 +498,42 @@ describe('popup', () => {
         'file=' + encodeURIComponent('override/folder/override-file'),
       );
     });
+
+    it('clears manual filename override when toggling URL/Title', async () => {
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        targetFilename: 'manual-file',
+      };
+      const { init, getCurrentDraft } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        storedDraft,
+      });
+      await init();
+
+      expect(getCurrentDraft().targetFilename).toBe('manual-file');
+
+      const urlToggle = document.getElementById('toggle-url') as HTMLInputElement;
+      urlToggle.checked = true;
+      urlToggle.dispatchEvent(new Event('change', { bubbles: true }));
+
+      await vi.waitFor(() => {
+        expect(getCurrentDraft().targetFilename).toBe('');
+      });
+    });
+
+    it('shows empty filename input with generated placeholder in target edit when no override exists', async () => {
+      const { init, openTargetEdit } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        storedDraft: DEFAULT_DRAFT,
+      });
+      await init();
+
+      openTargetEdit();
+      const filenameInput = document.getElementById('target-filename-input') as HTMLInputElement;
+      expect(filenameInput.value).toBe('');
+      // Placeholder shows the auto-generated filename (derived from title/url/content).
+      expect(filenameInput.placeholder.length).toBeGreaterThan(0);
+    });
   });
 
   describe('frontmatter section', () => {
