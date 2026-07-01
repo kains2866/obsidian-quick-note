@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getLanguage, t, localizePage } from '../../src/shared/i18n.js';
+import { getLanguage, t, localizePage, messages } from '../../src/shared/i18n.js';
 
 describe('i18n', () => {
   let originalLanguage: PropertyDescriptor | undefined;
@@ -51,14 +51,22 @@ describe('i18n', () => {
     expect(t('saveToObsidian')).toBe('Save to Obsidian');
   });
 
-  it('falls back to English if key missing in current language', () => {
-    setNavigatorLanguage('zh-CN');
-    expect(t('missingKeyThatExistsInEn')).toBe('English fallback');
-  });
-
   it('falls back to key if missing in both languages', () => {
     setNavigatorLanguage('en-US');
     expect(t('totallyMissingKey')).toBe('totallyMissingKey');
+  });
+
+  it('replaces placeholders in localized strings', () => {
+    setNavigatorLanguage('en-US');
+    expect(t('currentShortcut', { shortcut: 'Ctrl+Shift+S' })).toBe(
+      'Current shortcut: Ctrl+Shift+S',
+    );
+  });
+
+  it('has matching keys in zh-CN and en message tables', () => {
+    const zhKeys = Object.keys(messages['zh-CN']).sort();
+    const enKeys = Object.keys(messages['en']).sort();
+    expect(zhKeys).toEqual(enKeys);
   });
 
   it('localizes elements with data-i18n attribute', () => {

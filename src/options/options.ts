@@ -1,19 +1,12 @@
 import { getSettings, setSettings } from '../shared/storage.js';
 import { DEFAULT_SETTINGS } from '../shared/constants.js';
 import { renderTemplate } from '../shared/templates.js';
-import { t, localizePage } from '../shared/i18n.js';
+import { getLanguage, t, localizePage, localizePlaceholders } from '../shared/i18n.js';
 import type { ExtensionSettings, DateFormat } from '../shared/types.js';
 
-const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
+document.documentElement.lang = getLanguage();
 
-function localizePlaceholders(): void {
-  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
-    const key = el.getAttribute('data-i18n-placeholder');
-    if (key) {
-      (el as HTMLInputElement).placeholder = t(key);
-    }
-  });
-}
+const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
 
 export async function loadSettings(): Promise<void> {
   const settings = await getSettings();

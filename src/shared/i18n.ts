@@ -56,6 +56,7 @@ export const messages: Record<Language, Record<string, string>> = {
     shortcutReadFailed: '当前快捷键：无法读取',
     editShortcuts: '编辑快捷键',
     settingsSaved: '设置已保存',
+    shortcutLoading: '当前快捷键：读取中…',
     dateTemplateError: '（日期模板格式错误）',
     exampleNote: '示例笔记.md',
     baseFolderEmptyHint: '默认保存文件夹为空，将保存到仓库根目录',
@@ -136,6 +137,7 @@ export const messages: Record<Language, Record<string, string>> = {
     shortcutReadFailed: 'Current shortcut: unable to read',
     editShortcuts: 'Edit shortcuts',
     settingsSaved: 'Settings saved',
+    shortcutLoading: 'Current shortcut: loading…',
     dateTemplateError: '(date template format error)',
     exampleNote: 'example-note.md',
     baseFolderEmptyHint: 'Default save folder is empty; file will be saved to vault root',
@@ -164,9 +166,6 @@ export const messages: Record<Language, Record<string, string>> = {
     guideTroubleshootItem1: 'Confirm the Obsidian vault name matches exactly (case-sensitive) the name shown in the bottom-left corner of Obsidian.',
     guideTroubleshootItem2: 'Confirm the default save folder and date subfolder template are spelled correctly and the folder exists in the vault.',
     guideTroubleshootItem3: 'Confirm Obsidian is installed and can handle obsidian:// links.',
-
-    // test fallback key
-    missingKeyThatExistsInEn: 'English fallback',
   },
 };
 
@@ -188,4 +187,17 @@ export function localizePage(): void {
       el.textContent = t(key);
     }
   });
+}
+
+export function localizePlaceholders(): void {
+  document
+    .querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+      'input[data-i18n-placeholder], textarea[data-i18n-placeholder]',
+    )
+    .forEach((el) => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (key) {
+        el.placeholder = t(key);
+      }
+    });
 }

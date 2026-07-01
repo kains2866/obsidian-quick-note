@@ -6,17 +6,10 @@ import {
   resolveNotePath,
   formatFrontmatterDate,
 } from '../shared/templates.js';
-import { t, localizePage } from '../shared/i18n.js';
+import { getLanguage, t, localizePage, localizePlaceholders } from '../shared/i18n.js';
 import type { PageInfo, Draft, ExtensionSettings, FrontmatterKey } from '../shared/types.js';
 
-function localizePlaceholders(): void {
-  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
-    const key = el.getAttribute('data-i18n-placeholder');
-    if (key) {
-      (el as HTMLInputElement | HTMLTextAreaElement).placeholder = t(key);
-    }
-  });
-}
+document.documentElement.lang = getLanguage();
 
 const editor = document.getElementById('editor') as HTMLTextAreaElement;
 const toggleUrl = document.getElementById('toggle-url') as HTMLInputElement;
