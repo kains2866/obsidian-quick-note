@@ -82,6 +82,7 @@ async function loadOptions(overrides: {
 
 describe('options page', () => {
   beforeEach(() => {
+    vi.stubGlobal('navigator', { ...navigator, language: 'en-US' });
     document.body.innerHTML = '';
   });
 

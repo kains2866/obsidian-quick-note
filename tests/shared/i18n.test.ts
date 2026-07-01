@@ -95,10 +95,15 @@ describe('i18n', () => {
 
   it('falls back to English when a key is missing in the current language', () => {
     setNavigatorLanguage('zh-CN');
-    const key = '__testOnlyEnglishKey';
-    const zhValue = messages['zh-CN'][key];
-    delete (messages['zh-CN'] as Record<string, string>)[key];
-    expect(t(key)).toBe(messages['en'][key]);
-    messages['zh-CN'][key] = zhValue;
+    const originalZhMessages = messages['zh-CN'];
+    const zhMessagesWithoutKey = { ...originalZhMessages };
+    delete zhMessagesWithoutKey.saveToObsidian;
+    messages['zh-CN'] = zhMessagesWithoutKey;
+
+    try {
+      expect(t('saveToObsidian')).toBe(messages['en'].saveToObsidian);
+    } finally {
+      messages['zh-CN'] = originalZhMessages;
+    }
   });
 });

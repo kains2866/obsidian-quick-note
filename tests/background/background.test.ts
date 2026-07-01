@@ -5,6 +5,7 @@ const mockTabsUpdate = vi.fn();
 const mockTabsQuery = vi.fn();
 
 beforeEach(() => {
+  vi.stubGlobal('navigator', { ...navigator, language: 'en-US' });
   mockDownload.mockReset();
   mockTabsUpdate.mockReset();
   mockTabsQuery.mockReset();
@@ -12,6 +13,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 async function loadBackground() {

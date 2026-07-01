@@ -85,7 +85,6 @@ export const messages: Record<Language, Record<string, string>> = {
     guideTroubleshootItem1: '确认「Obsidian 仓库名」与 Obsidian 左下角显示的名称完全一致（区分大小写）。',
     guideTroubleshootItem2: '确认「默认保存文件夹」和「日期子目录模板」拼写正确，且该文件夹在仓库中真实存在。',
     guideTroubleshootItem3: '确认 Obsidian 已安装且能处理 obsidian:// 链接。',
-    __testOnlyEnglishKey: '仅用于测试英文回退',
   },
   'en': {
     // popup
@@ -167,7 +166,6 @@ export const messages: Record<Language, Record<string, string>> = {
     guideTroubleshootItem1: 'Confirm the Obsidian vault name matches exactly (case-sensitive) the name shown in the bottom-left corner of Obsidian.',
     guideTroubleshootItem2: 'Confirm the default save folder and date subfolder template are spelled correctly and the folder exists in the vault.',
     guideTroubleshootItem3: 'Confirm Obsidian is installed and can handle obsidian:// links.',
-    __testOnlyEnglishKey: 'test-only-english-fallback-value',
   },
 };
 
@@ -176,7 +174,7 @@ export function t(key: string, replacements?: Record<string, string>): string {
   let text = messages[lang][key] ?? messages['en'][key] ?? key;
   if (replacements) {
     Object.entries(replacements).forEach(([name, value]) => {
-      text = text.replace(new RegExp(`\\{${name}\\}`, 'g'), value);
+      text = text.replace(new RegExp(`\\{${name}\\}`, 'g'), () => value);
     });
   }
   return text;

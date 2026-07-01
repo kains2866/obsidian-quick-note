@@ -159,6 +159,7 @@ async function loadPopup(overrides: {
 
 describe('popup', () => {
   beforeEach(() => {
+    vi.stubGlobal('navigator', { ...navigator, language: 'en-US' });
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.setSystemTime(FIXED_DATE);
   });
