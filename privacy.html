@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>隐私政策 - Obsidian Quick Note</title>
+  <style>
+    body {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #1f2937;
+    }
+    h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.25rem; margin-top: 2rem; margin-bottom: 0.75rem; }
+    p { margin: 0.75rem 0; }
+    ul { padding-left: 1.5rem; }
+    li { margin: 0.4rem 0; }
+    a { color: #65b687; }
+    .effective { color: #6b7280; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>Obsidian Quick Note 隐私政策</h1>
+  <p class="effective">生效日期：2026 年 7 月 2 日</p>
+
+  <p>Obsidian Quick Note（以下简称"本扩展"）尊重用户隐私。本隐私政策说明本扩展如何处理用户信息。</p>
+
+  <h2>1. 我们不收集个人数据</h2>
+  <p>本扩展不会收集、存储或传输任何个人身份信息。所有扩展设置（如 Obsidian 仓库名、默认保存文件夹等）均使用 Chrome 提供的 <code>chrome.storage</code> API 保存在用户本地浏览器中，开发者无法访问。</p>
+
+  <h2>2. 权限使用说明</h2>
+  <p>本扩展申请的权限仅用于实现核心功能，具体如下：</p>
+  <ul>
+    <li><strong>storage</strong>：保存用户的扩展设置（仓库名、文件夹、Frontmatter 选项等）。</li>
+    <li><strong>activeTab / tabs</strong>：获取当前页面信息（标题、URL、选中文本），用于生成 Markdown 笔记。</li>
+    <li><strong>downloads</strong>：当保存到 Obsidian 失败时，自动下载 Markdown 兜底文件到本地。</li>
+    <li><strong>clipboardWrite</strong>：将 Markdown 内容写入剪贴板，以便通过 Obsidian URI 保存。</li>
+  </ul>
+
+  <h2>3. 第三方服务</h2>
+  <p>本扩展不使用任何第三方分析、广告或追踪服务。所有数据仅在用户本地浏览器与 Obsidian 应用之间流转。</p>
+
+  <h2>4. 数据安全</h2>
+  <p>由于本扩展不在服务器端存储任何数据，因此不存在数据泄露风险。用户生成的 Markdown 内容通过 Obsidian URI 和本地剪贴板传递，完全由用户掌控。</p>
+
+  <h2>5. 联系我们</h2>
+  <p>如果您对本隐私政策有任何疑问，请通过邮件联系我们：<a href="mailto:kains3772@gmail.com">kains3772@gmail.com</a>。</p>
+</body>
+</html>
