@@ -596,6 +596,40 @@ describe('popup', () => {
 
       expect(filenameInput.value).toBe('example.com-path');
     });
+
+    it('resets draft to defaults after successful save so next popup uses title filename', async () => {
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        includeTitle: false,
+        includeUrl: false,
+        targetFilename: 'custom-name',
+      };
+      const sendMessage = vi.fn((message: { type: string }) => {
+        if (message.type === 'OPEN_OBSIDIAN_URL') return Promise.resolve({ ok: true });
+        return Promise.resolve({ ok: true });
+      });
+      const tabsSendMessage = vi.fn((_tabId: number, message: { type: string }) => {
+        if (message.type === 'GET_PAGE_INFO') return Promise.resolve(page);
+        if (message.type === 'COPY_TO_CLIPBOARD') return Promise.resolve({ success: false });
+        return Promise.resolve({});
+      });
+      const { init, handleSave, getCurrentDraft } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        storedDraft,
+        sendMessage,
+        tabsSendMessage,
+      });
+      await init();
+
+      const editor = document.getElementById('editor') as HTMLTextAreaElement;
+      editor.value = 'note body';
+      await handleSave();
+
+      const currentDraft = getCurrentDraft();
+      expect(currentDraft.includeTitle).toBe(DEFAULT_DRAFT.includeTitle);
+      expect(currentDraft.includeUrl).toBe(DEFAULT_DRAFT.includeUrl);
+      expect(currentDraft.targetFilename).toBe('');
+    });
   });
 
   describe('frontmatter section', () => {
