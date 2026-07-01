@@ -5,18 +5,73 @@ function getMetaContent(selector: string): string {
   return element?.getAttribute('content') ?? '';
 }
 
-export function getPageInfo(): PageInfo {
-  const selection = window.getSelection()?.toString() ?? '';
-  const author =
+function getTextContent(selector: string): string {
+  const element = document.querySelector(selector);
+  return element?.textContent?.trim() ?? '';
+}
+
+function extractJsonLdAuthor(): string {
+  const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
+  for (const script of scripts) {
+    try {
+      const data = JSON.parse(script.textContent || '{}');
+      const candidates = Array.isArray(data) ? data : [data];
+      for (const item of candidates) {
+        const author = item.author;
+        if (typeof author === 'string' && author) return author;
+        if (author?.name) return author.name;
+        if (Array.isArray(author) && author[0]?.name) return author[0].name;
+        if (Array.isArray(author) && typeof author[0] === 'string') return author[0];
+      }
+    } catch {
+      // Ignore malformed JSON-LD.
+    }
+  }
+  return '';
+}
+
+function extractAuthor(): string {
+  return (
     getMetaContent('meta[name="author"]') ||
     getMetaContent('meta[property="article:author"]') ||
-    '';
-  const description =
+    getMetaContent('meta[name="twitter:creator"]') ||
+    getMetaContent('meta[property="twitter:creator"]') ||
+    extractJsonLdAuthor() ||
+    getTextContent('[rel="author"]') ||
+    getTextContent('.author') ||
+    getTextContent('.post-author') ||
+    getTextContent('.article-author') ||
+    getTextContent('.user-name') ||
+    getTextContent('.username') ||
+    getTextContent('.creator-name') ||
+    ''
+  );
+}
+
+function extractDescription(): string {
+  const fromMeta =
     getMetaContent('meta[name="description"]') ||
     getMetaContent('meta[property="og:description"]') ||
-    '';
-  const site =
+    getMetaContent('meta[property="twitter:description"]') ||
+    getMetaContent('meta[name="twitter:description"]');
+  if (fromMeta) return fromMeta;
+
+  // Fallback: first meaningful paragraph text, limited to ~200 chars.
+  const paragraphs = Array.from(document.querySelectorAll('article p, main p, .post-content p, .article-content p'));
+  for (const p of paragraphs) {
+    const text = p.textContent?.trim() ?? '';
+    if (text.length > 40) {
+      return text.slice(0, 200).trim();
+    }
+  }
+  return '';
+}
+
+function extractSite(): string {
+  return (
     getMetaContent('meta[property="og:site_name"]') ||
+    getMetaContent('meta[name="application-name"]') ||
+    getMetaContent('meta[name="apple-mobile-web-app-title"]') ||
     document.domain ||
     (() => {
       try {
@@ -25,15 +80,20 @@ export function getPageInfo(): PageInfo {
         return '';
       }
     })() ||
-    '';
+    ''
+  );
+}
+
+export function getPageInfo(): PageInfo {
+  const selection = window.getSelection()?.toString() ?? '';
 
   return {
     url: window.location.href,
     title: document.title,
     selectedText: selection,
-    author,
-    description,
-    site,
+    author: extractAuthor(),
+    description: extractDescription(),
+    site: extractSite(),
   };
 }
 
