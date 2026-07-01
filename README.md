@@ -2,7 +2,6 @@
 
 Chrome 浏览器扩展：点击工具栏图标，快速记录 Markdown 笔记并保存到 Obsidian。
 
-> 详细架构与方案决策见 [`docs/architecture.md`](./docs/architecture.md)。
 > 旧版（基于 Local REST API）已备份在：`obsidian-quick-note (old)/`
 
 ## 功能特性
@@ -101,8 +100,6 @@ npm run coverage # 覆盖率
 - 目标文件夹必须已在 Obsidian 仓库中存在（`obsidian://new` 不会自动创建中间文件夹）。
 - 文件名冲突时不会自动重命名。
 - 语言切换基于 Chrome 界面语言，暂不支持手动切换。
-
-详见 [`docs/architecture.md`](./docs/architecture.md)。
 
 ## 支持开发者
 
