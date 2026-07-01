@@ -320,7 +320,11 @@ export function openTargetEdit(): void {
   const currentDraft = getCurrentDraft();
   const date = new Date();
   targetFolderInput.value = currentDraft.targetFolder || getComputedFolder(date);
-  targetFilenameInput.value = currentDraft.targetFilename || getComputedFilename(date);
+  // Only show the override value if the user has actually set one.
+  // Leave the input empty (with placeholder) when falling back to auto-generation,
+  // so clearing the field naturally restores automatic filenames.
+  targetFilenameInput.value = currentDraft.targetFilename;
+  targetFilenameInput.placeholder = getComputedFilename(date);
   targetEditEl.classList.add('visible');
 }
 
@@ -332,6 +336,7 @@ export async function saveTargetEdit(): Promise<void> {
   draft = {
     ...getCurrentDraft(),
     targetFolder: targetFolderInput.value.trim(),
+    // Empty filename means "fall back to auto-generated filename".
     targetFilename: targetFilenameInput.value.trim(),
   };
   await setDraft(draft);
@@ -347,6 +352,8 @@ toggleTitle.addEventListener('change', () => {
   if (toggleTitle.checked) {
     toggleUrl.checked = false;
   }
+  // Clear any manual filename override so the toggle takes effect immediately.
+  draft = { ...getCurrentDraft(), targetFilename: '' };
   updateTargetPath();
   saveDraft();
 });
@@ -355,6 +362,8 @@ toggleUrl.addEventListener('change', () => {
   if (toggleUrl.checked) {
     toggleTitle.checked = false;
   }
+  // Clear any manual filename override so the toggle takes effect immediately.
+  draft = { ...getCurrentDraft(), targetFilename: '' };
   updateTargetPath();
   saveDraft();
 });
