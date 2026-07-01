@@ -4,3 +4,8 @@ coverage/
 .DS_Store
 *.log
 .env
+.cache/
+.temp/
+*.local
+.vscode/settings.json
+.idea/
