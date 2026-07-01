@@ -371,21 +371,29 @@ button[type="submit"]:active {
   line-height: 1.5;
 }
 
-.qr-placeholder {
-  width: 180px;
-  height: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-  padding: 1rem;
-  background: var(--surface);
-  border: 2px dashed var(--border-strong);
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  color: var(--ink-subtle);
+.qr-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.qr-grid figure {
+  margin: 0;
   text-align: center;
-  line-height: 1.5;
+}
+
+.qr-grid img {
+  width: 100%;
+  max-width: 160px;
+  height: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.qr-grid figcaption {
+  margin-top: 0.4rem;
+  font-size: 12px;
+  color: var(--ink-muted);
 }
 
 @media (max-width: 480px) {

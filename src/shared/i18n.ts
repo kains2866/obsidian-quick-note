@@ -69,10 +69,8 @@ export const messages: Record<Language, Record<string, string>> = {
 
     // footer
     footerMadeBy: '用 ❤️ 制作',
-    footerEmail: '邮件反馈',
     supportDeveloper: '☕ 支持开发者',
     supportQrHint: '如果这款工具帮到了你，可以扫码请作者喝杯咖啡 ☕',
-    supportQrPlaceholder: '收款码占位图\n请替换为微信/支付宝收款码',
 
     // guide
     guideTitle: '使用指引与常见问题',
@@ -160,10 +158,8 @@ export const messages: Record<Language, Record<string, string>> = {
 
     // footer
     footerMadeBy: 'Made with ❤️ by',
-    footerEmail: 'Email',
     supportDeveloper: '☕ Support developer',
     supportQrHint: 'If this tool helps, buy the author a coffee ☕',
-    supportQrPlaceholder: 'QR code placeholder\nReplace with WeChat/Alipay QR code',
 
     // guide
     guideTitle: 'Guide & FAQ',
