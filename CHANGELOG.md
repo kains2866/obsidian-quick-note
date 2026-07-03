@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/lang/zh-CN/
 ### 修复
 
 - 修复连续框选文字时，第二次及以后的选中文本未正确带入 popup 的 bug
+- 修复 popup 关闭过快导致初始框选内容未持久化到 storage 的问题
+- 修复 textarea 手动 resize 可超出 popup 窗口、遮挡底部按钮的问题
 
 ### 变更
 
@@ -17,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/lang/zh-CN/
 - draft 草稿改为按标签页隔离，切换标签页后不再互相覆盖
 - 刷新或关闭标签页时自动清空对应草稿
 - storage key 由 `oqn:draft` 改为 `oqn:drafts`
+- popup 宽度调整为 `420px`，高度适配 Chrome popup 约 `600px` 限制
+- textarea 高度随内容自动撑开（`160px` → `340px`），达到最大高度后内部滚动
+- 移除 textarea 手动拖拽把手，避免用户把输入框拖没
 
 ## [0.3.0] - 2026-07-03
 
