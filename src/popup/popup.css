@@ -33,8 +33,6 @@ body {
 
 .popup {
   padding: 16px 16px 12px;
-  max-height: 580px;
-  overflow-y: auto;
 }
 
 .target-path {
@@ -222,7 +220,7 @@ body {
 textarea {
   width: 100%;
   height: 160px;
-  max-height: 700px;
+  max-height: 340px;
   resize: vertical;
   padding: 10px 12px;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
