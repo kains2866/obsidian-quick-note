@@ -76,7 +76,8 @@ function renderPopup(): void {
 
 function chromeMock(overrides: {
   storedSettings?: ExtensionSettings;
-  storedDraft?: Draft;
+  storedDrafts?: Record<number, Draft>;
+  activeTabId?: number | undefined;
   pageInfo?: PageInfo;
   sendMessage?: Mock;
   tabsSendMessage?: Mock;
@@ -85,9 +86,11 @@ function chromeMock(overrides: {
   if (overrides.storedSettings !== undefined) {
     mockStorage[STORAGE_KEYS.settings] = overrides.storedSettings;
   }
-  if (overrides.storedDraft !== undefined) {
-    mockStorage[STORAGE_KEYS.draft] = overrides.storedDraft;
+  if (overrides.storedDrafts !== undefined) {
+    mockStorage[STORAGE_KEYS.drafts] = overrides.storedDrafts;
   }
+
+  const activeTabId = overrides.activeTabId;
 
   const runtimeSendMessage =
     overrides.sendMessage ??
@@ -129,7 +132,7 @@ function chromeMock(overrides: {
     },
     tabs: {
       query: vi.fn((_query) =>
-        Promise.resolve([{ id: 1, url: page.url, title: page.title }]),
+        Promise.resolve([{ id: activeTabId, url: page.url, title: page.title }]),
       ),
       sendMessage: tabsSendMessage,
       update: vi.fn(() => Promise.resolve({})),
@@ -147,14 +150,39 @@ function chromeMock(overrides: {
 async function loadPopup(overrides: {
   storedSettings?: ExtensionSettings;
   storedDraft?: Draft;
+  activeTabId?: number;
   pageInfo?: PageInfo;
   sendMessage?: Mock;
   tabsSendMessage?: Mock;
 } = {}): Promise<PopupModule> {
   renderPopup();
-  vi.stubGlobal('chrome', chromeMock(overrides));
+  const activeTabId = overrides.activeTabId ?? 1;
+  const storedDrafts = overrides.storedDraft !== undefined ? { [activeTabId]: overrides.storedDraft } : undefined;
+  vi.stubGlobal('chrome', chromeMock({ ...overrides, activeTabId, storedDrafts }));
   vi.resetModules();
   return import('../../src/popup/popup.js');
+}
+
+function getLastSavedDraft(tabId: number = 1): Draft | undefined {
+  const calls = (chrome.storage.local.set as Mock).mock.calls;
+  for (let i = calls.length - 1; i >= 0; i--) {
+    const drafts = calls[i][0][STORAGE_KEYS.drafts] as Record<number, Draft> | undefined;
+    if (drafts && drafts[tabId] !== undefined) {
+      return drafts[tabId];
+    }
+  }
+  return undefined;
+}
+
+function wasDraftCleared(tabId: number = 1): boolean {
+  const calls = (chrome.storage.local.set as Mock).mock.calls;
+  for (let i = calls.length - 1; i >= 0; i--) {
+    const drafts = calls[i][0][STORAGE_KEYS.drafts] as Record<number, Draft> | undefined;
+    if (drafts && !(tabId in drafts)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 describe('popup', () => {
@@ -241,6 +269,70 @@ describe('popup', () => {
 
       expect((document.getElementById('editor') as HTMLTextAreaElement).value).toBe('');
     });
+
+    it('appends selected text to existing draft content', async () => {
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        content: 'existing draft',
+      };
+      const { init } = await loadPopup({
+        storedDraft,
+        pageInfo: { ...page, selectedText: 'new selection' },
+      });
+      await init();
+
+      expect((document.getElementById('editor') as HTMLTextAreaElement).value).toBe(
+        'existing draft\n\nnew selection',
+      );
+    });
+
+    it('does not append duplicate selected text', async () => {
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        content: 'existing draft\n\nduplicate selection',
+      };
+      const { init } = await loadPopup({
+        storedDraft,
+        pageInfo: { ...page, selectedText: 'duplicate selection' },
+      });
+      await init();
+
+      expect((document.getElementById('editor') as HTMLTextAreaElement).value).toBe(
+        'existing draft\n\nduplicate selection',
+      );
+    });
+
+    it('isolates drafts between tabs', async () => {
+      const { init: initTab1 } = await loadPopup({
+        storedDraft: { ...DEFAULT_DRAFT, content: 'tab 1 draft' },
+        activeTabId: 1,
+      });
+      await initTab1();
+      expect((document.getElementById('editor') as HTMLTextAreaElement).value).toBe('tab 1 draft');
+
+      vi.unstubAllGlobals();
+      document.body.innerHTML = '';
+      vi.stubGlobal('navigator', { ...navigator, language: 'en-US' });
+
+      const { init: initTab2 } = await loadPopup({
+        storedDraft: { ...DEFAULT_DRAFT, content: 'tab 2 draft' },
+        activeTabId: 2,
+      });
+      await initTab2();
+      expect((document.getElementById('editor') as HTMLTextAreaElement).value).toBe('tab 2 draft');
+    });
+
+    it('shows error when current tab id is unavailable', async () => {
+      renderPopup();
+      vi.stubGlobal('chrome', chromeMock({ activeTabId: undefined }));
+      vi.resetModules();
+      const { init } = await import('../../src/popup/popup.js');
+      await init();
+
+      const status = document.getElementById('status') as HTMLDivElement;
+      expect(status.textContent).toBe(t('cannotGetCurrentTab'));
+      expect(status.className).toBe('error');
+    });
   });
 
   describe('handleSave', () => {
@@ -256,6 +348,22 @@ describe('popup', () => {
 
       const status = document.getElementById('status') as HTMLDivElement;
       expect(status.textContent).toBe(t('pleaseSetVaultName'));
+      expect(status.className).toBe('error');
+    });
+
+    it('shows an error when current tab id is unavailable', async () => {
+      renderPopup();
+      vi.stubGlobal('chrome', chromeMock({ activeTabId: undefined, storedSettings: SETTINGS_WITH_VAULT }));
+      vi.resetModules();
+      const { init, handleSave } = await import('../../src/popup/popup.js');
+      await init();
+
+      const editor = document.getElementById('editor') as HTMLTextAreaElement;
+      editor.value = 'my note';
+      await handleSave();
+
+      const status = document.getElementById('status') as HTMLDivElement;
+      expect(status.textContent).toBe(t('cannotGetCurrentTab'));
       expect(status.className).toBe('error');
     });
 
@@ -324,7 +432,7 @@ describe('popup', () => {
       const status = document.getElementById('status') as HTMLDivElement;
       expect(status.textContent).toBe(t('savedToObsidian'));
       expect(status.className).toBe('success');
-      expect(chrome.storage.local.remove).toHaveBeenCalledWith(STORAGE_KEYS.draft);
+      expect(wasDraftCleared(1)).toBe(true);
     });
 
     it('falls back to content in URL when clipboard fails', async () => {
@@ -400,18 +508,11 @@ describe('popup', () => {
       expect(downloadCall).toBeDefined();
     });
 
-    it('falls back to download when current tab is not available', async () => {
-      const sendMessage = vi.fn((message: { type: string }) => {
-        if (message.type === 'DOWNLOAD_NOTE') {
-          return Promise.resolve({ ok: true });
-        }
-        return Promise.resolve({ ok: true });
-      });
-      const { init, handleSave } = await loadPopup({
-        storedSettings: SETTINGS_WITH_VAULT,
-        sendMessage,
-      });
-      (chrome.tabs.query as Mock).mockResolvedValue([]);
+    it('shows error when current tab is not available', async () => {
+      renderPopup();
+      vi.stubGlobal('chrome', chromeMock({ storedSettings: SETTINGS_WITH_VAULT, activeTabId: undefined }));
+      vi.resetModules();
+      const { init, handleSave } = await import('../../src/popup/popup.js');
       await init();
 
       const editor = document.getElementById('editor') as HTMLTextAreaElement;
@@ -419,15 +520,8 @@ describe('popup', () => {
       await handleSave();
 
       const status = document.getElementById('status') as HTMLDivElement;
-      expect(status.textContent).toBe(t('saveFailedDownloaded', { error: t('cannotGetCurrentTab') }));
-
-      const downloadCall = sendMessage.mock.calls.find(
-        (call) => (call[0] as { type: string }).type === 'DOWNLOAD_NOTE',
-      );
-      expect(downloadCall).toBeDefined();
-      const downloadMessage = downloadCall![0] as unknown as { filename: string; content: string };
-      expect(downloadMessage.filename).toMatch(/\.md$/);
-      expect(downloadMessage.content).toContain('no tab note');
+      expect(status.textContent).toBe(t('cannotGetCurrentTab'));
+      expect(status.className).toBe('error');
     });
 
     it('shows error when both Obsidian and download fallback fail', async () => {
@@ -678,9 +772,8 @@ describe('popup', () => {
         expect(chrome.storage.local.set).toHaveBeenCalled();
       });
 
-      const lastCall = (chrome.storage.local.set as Mock).mock.calls.at(-1);
-      const savedDraft = lastCall[0]['oqn:draft'] as Draft;
-      expect(savedDraft.frontmatterOverrides).toEqual({ title: false });
+      const savedDraft = getLastSavedDraft(1);
+      expect(savedDraft?.frontmatterOverrides).toEqual({ title: false });
     });
 
     it('uses overrides when saving note', async () => {
@@ -766,9 +859,8 @@ describe('popup', () => {
         expect(chrome.storage.local.set).toHaveBeenCalled();
       });
 
-      const lastCall = (chrome.storage.local.set as Mock).mock.calls.at(-1);
-      const savedDraft = lastCall[0]['oqn:draft'] as Draft;
-      expect(savedDraft.frontmatterOverrides).toEqual({ author: true });
+      const savedDraft = getLastSavedDraft(1);
+      expect(savedDraft?.frontmatterOverrides).toEqual({ author: true });
     });
 
     it('clears frontmatterOverrides after a successful save', async () => {

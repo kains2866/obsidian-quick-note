@@ -1,4 +1,5 @@
 import { t } from '../shared/i18n.js';
+import { removeDraft } from '../shared/storage.js';
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
@@ -21,6 +22,16 @@ chrome.contextMenus.onClicked.addListener((info) => {
         height: 620,
       });
     }
+  }
+});
+
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  await removeDraft(tabId);
+});
+
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'loading' && tab.url?.startsWith('http')) {
+    await removeDraft(tabId);
   }
 });
 

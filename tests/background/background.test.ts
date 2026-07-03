@@ -3,12 +3,22 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const mockDownload = vi.fn();
 const mockTabsUpdate = vi.fn();
 const mockTabsQuery = vi.fn();
+const mockStorageSet = vi.fn();
+const mockStorageGet = vi.fn();
+const mockStorageRemove = vi.fn();
+const mockTabsOnRemovedAddListener = vi.fn();
+const mockTabsOnUpdatedAddListener = vi.fn();
 
 beforeEach(() => {
   vi.stubGlobal('navigator', { ...navigator, language: 'en-US' });
   mockDownload.mockReset();
   mockTabsUpdate.mockReset();
   mockTabsQuery.mockReset();
+  mockStorageSet.mockReset();
+  mockStorageGet.mockReset();
+  mockStorageRemove.mockReset();
+  mockTabsOnRemovedAddListener.mockReset();
+  mockTabsOnUpdatedAddListener.mockReset();
 });
 
 afterEach(() => {
@@ -16,7 +26,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-async function loadBackground() {
+async function loadBackground(initialStorage: Record<string, unknown> = {}) {
   vi.stubGlobal('chrome', {
     runtime: {
       onInstalled: {
@@ -46,6 +56,23 @@ async function loadBackground() {
     tabs: {
       update: mockTabsUpdate,
       query: mockTabsQuery,
+      onRemoved: {
+        addListener: mockTabsOnRemovedAddListener,
+      },
+      onUpdated: {
+        addListener: mockTabsOnUpdatedAddListener,
+      },
+    },
+    storage: {
+      local: {
+        get: mockStorageGet.mockImplementation((keys: string[]) => {
+          const result: Record<string, unknown> = {};
+          keys.forEach((key) => { result[key] = initialStorage[key]; });
+          return Promise.resolve(result);
+        }),
+        set: mockStorageSet.mockImplementation(() => Promise.resolve()),
+        remove: mockStorageRemove.mockImplementation(() => Promise.resolve()),
+      },
     },
   });
   vi.resetModules();
@@ -144,5 +171,47 @@ describe('background', () => {
     expect(handled).toBe(true);
     await vi.waitFor(() => expect(sendResponse).toHaveBeenCalled());
     expect(sendResponse).toHaveBeenCalledWith({ ok: false, error: 'Download failed' });
+  });
+
+  it('registers tabs.onRemoved listener to clean up draft', async () => {
+    await loadBackground();
+    expect(mockTabsOnRemovedAddListener).toHaveBeenCalled();
+    expect(mockTabsOnUpdatedAddListener).toHaveBeenCalled();
+  });
+
+  it('removes draft when tab is closed', async () => {
+    const initialStorage = {
+      'oqn:drafts': { 1: { content: 'tab 1' }, 2: { content: 'tab 2' } },
+    };
+    await loadBackground(initialStorage);
+
+    const removedListener = mockTabsOnRemovedAddListener.mock.calls[0][0];
+    await removedListener(1);
+
+    expect(mockStorageSet).toHaveBeenCalledWith({ 'oqn:drafts': { 2: { content: 'tab 2' } } });
+  });
+
+  it('removes draft when tab starts loading an http page', async () => {
+    const initialStorage = {
+      'oqn:drafts': { 1: { content: 'tab 1' }, 2: { content: 'tab 2' } },
+    };
+    await loadBackground(initialStorage);
+
+    const updatedListener = mockTabsOnUpdatedAddListener.mock.calls[0][0];
+    await updatedListener(1, { status: 'loading' }, { url: 'https://example.com' });
+
+    expect(mockStorageSet).toHaveBeenCalledWith({ 'oqn:drafts': { 2: { content: 'tab 2' } } });
+  });
+
+  it('does not remove draft when tab loads a non-http url', async () => {
+    const initialStorage = {
+      'oqn:drafts': { 1: { content: 'tab 1' } },
+    };
+    await loadBackground(initialStorage);
+
+    const updatedListener = mockTabsOnUpdatedAddListener.mock.calls[0][0];
+    await updatedListener(1, { status: 'loading' }, { url: 'chrome-extension://mock/page.html' });
+
+    expect(mockStorageSet).not.toHaveBeenCalled();
   });
 });

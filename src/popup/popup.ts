@@ -1,5 +1,6 @@
 import { getSettings, getDraft, setDraft, clearDraft } from '../shared/storage.js';
 import { DEFAULT_DRAFT } from '../shared/constants.js';
+import { mergeSelectedText } from '../shared/draft-utils.js';
 import {
   renderTemplate,
   generateFilename,
@@ -68,14 +69,25 @@ let pageInfo: PageInfo = {
   site: '',
 };
 let draft: Draft = { content: '', includeUrl: false, includeTitle: false, targetFolder: '', targetFilename: '' };
+let currentTabId: number | undefined;
 
 export async function init(): Promise<void> {
-  [settings, draft] = await Promise.all([getSettings(), getDraft()]);
+  settings = await getSettings();
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab?.id) {
+  currentTabId = tab?.id;
+
+  if (!currentTabId) {
+    statusEl.textContent = t('cannotGetCurrentTab');
+    statusEl.className = 'error';
+    return;
+  }
+
+  draft = await getDraft(currentTabId);
+
+  if (currentTabId) {
     try {
-      pageInfo = await chrome.tabs.sendMessage(tab.id, { type: 'GET_PAGE_INFO' });
+      pageInfo = await chrome.tabs.sendMessage(currentTabId, { type: 'GET_PAGE_INFO' });
     } catch {
       pageInfo = {
         url: tab.url || '',
@@ -89,7 +101,7 @@ export async function init(): Promise<void> {
   }
 
   const selectedText = settings.includeSelectedText ? pageInfo.selectedText : '';
-  editor.value = draft.content || selectedText || '';
+  editor.value = mergeSelectedText(draft.content, selectedText);
   toggleTitle.checked = draft.includeTitle;
   toggleUrl.checked = draft.includeTitle ? false : draft.includeUrl;
 
@@ -203,8 +215,9 @@ export function updateCharCount(): void {
 }
 
 export async function saveDraft(): Promise<void> {
+  if (!currentTabId) return;
   draft = getCurrentDraft();
-  await setDraft(draft);
+  await setDraft(currentTabId, draft);
 }
 
 async function triggerFallback(filename: string, content: string, errorMessage: string): Promise<void> {
@@ -261,6 +274,12 @@ async function copyToClipboard(tabId: number, text: string): Promise<boolean> {
 }
 
 export async function handleSave(): Promise<void> {
+  if (!currentTabId) {
+    statusEl.textContent = t('cannotGetCurrentTab');
+    statusEl.className = 'error';
+    return;
+  }
+
   if (!settings.vaultName) {
     statusEl.textContent = t('pleaseSetVaultName');
     statusEl.className = 'error';
@@ -286,14 +305,7 @@ export async function handleSave(): Promise<void> {
   const content = buildNoteContent(editor.value, pageInfo, currentDraft, settings, date);
   const fileWithoutExt = path.replace(/\.md$/, '');
 
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const tabId = tab?.id;
-  if (!tabId) {
-    await triggerFallback(filename, content, t('cannotGetCurrentTab'));
-    return;
-  }
-
-  const clipboardSuccess = await copyToClipboard(tabId, content);
+  const clipboardSuccess = await copyToClipboard(currentTabId, content);
   const obsidianUrl = buildObsidianUrl(settings.vaultName, fileWithoutExt, clipboardSuccess, content);
 
   try {
@@ -303,7 +315,7 @@ export async function handleSave(): Promise<void> {
     });
 
     if (result?.ok) {
-      await clearDraft();
+      await clearDraft(currentTabId);
       editor.value = '';
       // Fully reset to the default draft so the next popup shows the default title-based filename.
       draft = { ...DEFAULT_DRAFT };
@@ -363,6 +375,8 @@ function guessToggleStateFromFilename(filename: string, date = new Date()): {
 }
 
 export async function saveTargetEdit(): Promise<void> {
+  if (!currentTabId) return;
+
   const rawFilename = targetFilenameInput.value.trim();
   const date = new Date();
   const { includeTitle, includeUrl } = guessToggleStateFromFilename(rawFilename, date);
@@ -376,7 +390,7 @@ export async function saveTargetEdit(): Promise<void> {
     // Empty filename means "fall back to auto-generated filename".
     targetFilename: rawFilename,
   };
-  await setDraft(draft);
+  await setDraft(currentTabId, draft);
   updateTargetPath();
   closeTargetEdit();
 }
