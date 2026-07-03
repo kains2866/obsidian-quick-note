@@ -1,5 +1,29 @@
 import { t } from '../shared/i18n.js';
 
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: 'open-obsidian-quick-note',
+    title: 'Obsidian Quick Note',
+    contexts: ['page', 'selection', 'link'],
+  });
+});
+
+chrome.contextMenus.onClicked.addListener((info) => {
+  if (info.menuItemId === 'open-obsidian-quick-note') {
+    try {
+      chrome.action.openPopup();
+    } catch {
+      // Fallback for older Chrome versions: open popup.html in a small window.
+      chrome.windows.create({
+        url: chrome.runtime.getURL('src/popup/popup.html'),
+        type: 'popup',
+        width: 420,
+        height: 620,
+      });
+    }
+  }
+});
+
 export function downloadMarkdownFile(filename: string, content: string): Promise<number> {
   const dataUrl = `data:text/markdown;charset=utf-8,${encodeURIComponent(content)}`;
   return new Promise((resolve, reject) => {

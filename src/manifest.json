@@ -3,12 +3,18 @@
   "name": "Obsidian Quick Note",
   "version": "0.2.0",
   "description": "Quickly capture Markdown notes and save them to Obsidian via Obsidian URI.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "permissions": [
     "storage",
     "activeTab",
     "tabs",
     "downloads",
-    "clipboardWrite"
+    "clipboardWrite",
+    "contextMenus"
   ],
   "action": {
     "default_popup": "src/popup/popup.html",

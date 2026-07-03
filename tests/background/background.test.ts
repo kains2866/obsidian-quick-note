@@ -19,10 +19,26 @@ afterEach(() => {
 async function loadBackground() {
   vi.stubGlobal('chrome', {
     runtime: {
+      onInstalled: {
+        addListener: vi.fn(),
+      },
       onMessage: {
         addListener: vi.fn(),
       },
+      getURL: vi.fn((path: string) => `chrome-extension://mock/${path}`),
       lastError: undefined,
+    },
+    contextMenus: {
+      create: vi.fn(),
+      onClicked: {
+        addListener: vi.fn(),
+      },
+    },
+    action: {
+      openPopup: vi.fn(),
+    },
+    windows: {
+      create: vi.fn(),
     },
     downloads: {
       download: mockDownload,
