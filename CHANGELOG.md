@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/lang/zh-CN/).
 
+## [0.3.1] - 2026-07-03
+
+### 修复
+
+- 修复连续框选文字时，第二次及以后的选中文本未正确带入 popup 的 bug
+
+### 变更
+
+- 同一标签页内，新选中文本追加到已有草稿后面（空一行），不再覆盖用户手动输入的内容
+- draft 草稿改为按标签页隔离，切换标签页后不再互相覆盖
+- 刷新或关闭标签页时自动清空对应草稿
+- storage key 由 `oqn:draft` 改为 `oqn:drafts`
+
 ## [0.3.0] - 2026-07-03
 
 ### 新增

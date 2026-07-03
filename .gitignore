@@ -10,3 +10,4 @@ docs/
 *.local
 .vscode/settings.json
 .idea/
+*.zip

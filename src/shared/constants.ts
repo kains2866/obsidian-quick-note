@@ -27,7 +27,7 @@ export const DEFAULT_DRAFT: Draft = {
 
 export const STORAGE_KEYS = {
   settings: 'oqn:settings',
-  draft: 'oqn:draft',
+  drafts: 'oqn:drafts',
 } as const;
 
 export const MAX_FILENAME_LENGTH = 80;
