@@ -72,6 +72,9 @@ export const messages: Record<Language, Record<string, string>> = {
     footerEmail: '邮件反馈',
     supportDeveloper: '☕ 支持开发者',
     supportQrHint: '如果这款工具帮到了你，可以扫码请作者喝杯咖啡 ☕',
+    wechatPayment: '微信支付',
+    alipay: '支付宝',
+    supportStar: '觉得好用？去 GitHub 给我们点个 ⭐ Star 吧！',
 
     // guide
     guideTitle: '使用指引与常见问题',
@@ -162,6 +165,9 @@ export const messages: Record<Language, Record<string, string>> = {
     footerEmail: 'Email',
     supportDeveloper: '☕ Support developer',
     supportQrHint: 'If this tool helps, buy the author a coffee ☕',
+    wechatPayment: 'WeChat Pay',
+    alipay: 'Alipay',
+    supportStar: 'Find it helpful? Give us a ⭐ Star on GitHub!',
 
     // guide
     guideTitle: 'Guide & FAQ',
