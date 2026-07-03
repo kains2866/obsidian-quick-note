@@ -98,6 +98,15 @@ describe('storage', () => {
     expect(drafts[2].content).toBe('b');
   });
 
+  it('creates drafts object when setting the first draft', async () => {
+    const draft = await getDraft(1);
+    expect(draft).toEqual(DEFAULT_DRAFT);
+
+    await setDraft(1, { ...DEFAULT_DRAFT, content: 'first' });
+    const drafts = await getAllDrafts();
+    expect(drafts[1].content).toBe('first');
+  });
+
   it('uses immutable updates when setting a draft', async () => {
     await setDraft(1, { ...DEFAULT_DRAFT, content: 'first' });
     const firstSnapshot = await getAllDrafts();
