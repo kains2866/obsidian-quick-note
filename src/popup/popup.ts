@@ -107,17 +107,18 @@ export async function init(): Promise<void> {
   toggleTitle.checked = draft.includeTitle;
   toggleUrl.checked = draft.includeTitle ? false : draft.includeUrl;
 
-  // Persist the initial state immediately so it survives if the user closes the
-  // popup before init() finishes or without typing anything.
-  saveDraft();
-
   editor.focus();
 
   updateTargetPath();
   updateCharCount();
+  autoResizeTextarea();
   renderFrontmatter();
   localizePage();
   localizePlaceholders();
+
+  // Persist the initial state immediately so it survives if the user closes the
+  // popup before init() finishes or without typing anything.
+  saveDraft();
 }
 
 export function getComputedFolder(date = new Date()): string {
@@ -218,6 +219,18 @@ export function updateTargetPath(): void {
 
 export function updateCharCount(): void {
   charCountEl.textContent = `${editor.value.length} ${t('charCount')}`;
+}
+
+const DEFAULT_TEXTAREA_HEIGHT = 160;
+const MAX_TEXTAREA_HEIGHT = 340;
+
+export function autoResizeTextarea(): void {
+  editor.style.height = 'auto';
+  const newHeight = Math.max(
+    DEFAULT_TEXTAREA_HEIGHT,
+    Math.min(editor.scrollHeight, MAX_TEXTAREA_HEIGHT),
+  );
+  editor.style.height = `${newHeight}px`;
 }
 
 export function saveDraft(): void {
@@ -406,6 +419,7 @@ export function saveTargetEdit(): void {
 
 editor.addEventListener('input', () => {
   updateCharCount();
+  autoResizeTextarea();
   saveDraft();
 });
 toggleTitle.addEventListener('change', () => {
