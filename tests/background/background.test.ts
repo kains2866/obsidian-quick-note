@@ -203,6 +203,18 @@ describe('background', () => {
     expect(mockStorageSet).toHaveBeenCalledWith({ 'oqn:drafts': { 2: { content: 'tab 2' } } });
   });
 
+  it('does not remove draft when tab url is undefined', async () => {
+    const initialStorage = {
+      'oqn:drafts': { 1: { content: 'tab 1' } },
+    };
+    await loadBackground(initialStorage);
+
+    const updatedListener = mockTabsOnUpdatedAddListener.mock.calls[0][0];
+    await updatedListener(1, { status: 'loading' }, {});
+
+    expect(mockStorageSet).not.toHaveBeenCalled();
+  });
+
   it('does not remove draft when tab loads a non-http url', async () => {
     const initialStorage = {
       'oqn:drafts': { 1: { content: 'tab 1' } },

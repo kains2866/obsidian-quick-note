@@ -508,6 +508,36 @@ describe('popup', () => {
       expect(downloadCall).toBeDefined();
     });
 
+    it('keeps draft intact in memory when save fails', async () => {
+      const sendMessage = vi.fn((message: { type: string }) => {
+        if (message.type === 'OPEN_OBSIDIAN_URL') {
+          return Promise.resolve({ ok: false, error: 'Obsidian rejected' });
+        }
+        if (message.type === 'DOWNLOAD_NOTE') {
+          return Promise.resolve({ ok: true });
+        }
+        return Promise.resolve({ ok: true });
+      });
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        content: 'draft before failure',
+      };
+      const { init, handleSave, getCurrentDraft } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        storedDraft,
+        sendMessage,
+      });
+      await init();
+
+      const editor = document.getElementById('editor') as HTMLTextAreaElement;
+      editor.value = 'draft before failure';
+      editor.dispatchEvent(new Event('input', { bubbles: true }));
+      await handleSave();
+
+      expect(wasDraftCleared(1)).toBe(false);
+      expect(getCurrentDraft().content).toBe('draft before failure');
+    });
+
     it('shows error when current tab is not available', async () => {
       renderPopup();
       vi.stubGlobal('chrome', chromeMock({ storedSettings: SETTINGS_WITH_VAULT, activeTabId: undefined }));

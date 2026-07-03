@@ -1,13 +1,24 @@
+function splitParagraphs(content: string): string[] {
+  return content
+    .split(/\n\n+/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+}
+
 export function mergeSelectedText(draftContent: string, selectedText: string): string {
   const trimmed = selectedText.trim();
   if (!trimmed) return draftContent;
 
-  const paragraphs = draftContent
-    .split(/\n\n+/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
+  const draftParagraphs = splitParagraphs(draftContent);
+  const selectedParagraphs = splitParagraphs(trimmed);
 
-  if (paragraphs.some((paragraph) => paragraph === trimmed)) {
+  // If any paragraph from the selection already exists in the draft, treat the
+  // whole selection as a duplicate to avoid partial repeats.
+  const hasDuplicate = selectedParagraphs.some((selectedParagraph) =>
+    draftParagraphs.some((draftParagraph) => draftParagraph === selectedParagraph),
+  );
+
+  if (hasDuplicate) {
     return draftContent;
   }
 
