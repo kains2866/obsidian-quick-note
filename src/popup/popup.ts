@@ -1,5 +1,5 @@
-import { getSettings, getDraft, setDraft, clearDraft } from '../shared/storage.js';
-import { DEFAULT_DRAFT } from '../shared/constants.js';
+import { getSettings, getAllDrafts, clearDraft } from '../shared/storage.js';
+import { DEFAULT_DRAFT, STORAGE_KEYS } from '../shared/constants.js';
 import { mergeSelectedText } from '../shared/draft-utils.js';
 import {
   renderTemplate,
@@ -70,9 +70,11 @@ let pageInfo: PageInfo = {
 };
 let draft: Draft = { content: '', includeUrl: false, includeTitle: false, targetFolder: '', targetFilename: '' };
 let currentTabId: number | undefined;
+let allDrafts: Record<number, Draft> = {};
 
 export async function init(): Promise<void> {
   settings = await getSettings();
+  allDrafts = await getAllDrafts();
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   currentTabId = tab?.id;
@@ -83,7 +85,7 @@ export async function init(): Promise<void> {
     return;
   }
 
-  draft = await getDraft(currentTabId);
+  draft = { ...DEFAULT_DRAFT, ...(allDrafts[currentTabId] ?? {}) };
 
   if (currentTabId) {
     try {
@@ -189,7 +191,7 @@ export function toggleFrontmatterBody(): void {
   frontmatterBody.classList.toggle('visible');
 }
 
-async function saveFrontmatterOverride(key: FrontmatterKey, value: boolean): Promise<void> {
+function saveFrontmatterOverride(key: FrontmatterKey, value: boolean): void {
   const defaultValue = settings[DEFAULT_FM_MAP[key]] as boolean;
   const currentOverrides = { ...draft.frontmatterOverrides };
   if (value === defaultValue) {
@@ -198,7 +200,7 @@ async function saveFrontmatterOverride(key: FrontmatterKey, value: boolean): Pro
     currentOverrides[key] = value;
   }
   draft = { ...draft, frontmatterOverrides: currentOverrides };
-  await saveDraft();
+  saveDraft();
 }
 
 export function updateTargetPath(): void {
@@ -214,10 +216,11 @@ export function updateCharCount(): void {
   charCountEl.textContent = `${editor.value.length} ${t('charCount')}`;
 }
 
-export async function saveDraft(): Promise<void> {
+export function saveDraft(): void {
   if (!currentTabId) return;
   draft = getCurrentDraft();
-  await setDraft(currentTabId, draft);
+  allDrafts = { ...allDrafts, [currentTabId]: draft };
+  chrome.storage.local.set({ [STORAGE_KEYS.drafts]: allDrafts });
 }
 
 async function triggerFallback(filename: string, content: string, errorMessage: string): Promise<void> {
@@ -319,6 +322,8 @@ export async function handleSave(): Promise<void> {
       editor.value = '';
       // Fully reset to the default draft so the next popup shows the default title-based filename.
       draft = { ...DEFAULT_DRAFT };
+      allDrafts = { ...allDrafts };
+      delete allDrafts[currentTabId];
       toggleTitle.checked = draft.includeTitle;
       toggleUrl.checked = draft.includeTitle ? false : draft.includeUrl;
       statusEl.textContent = t('savedToObsidian');
@@ -374,7 +379,7 @@ function guessToggleStateFromFilename(filename: string, date = new Date()): {
   return { includeTitle: false, includeUrl: false };
 }
 
-export async function saveTargetEdit(): Promise<void> {
+export function saveTargetEdit(): void {
   if (!currentTabId) return;
 
   const rawFilename = targetFilenameInput.value.trim();
@@ -390,7 +395,7 @@ export async function saveTargetEdit(): Promise<void> {
     // Empty filename means "fall back to auto-generated filename".
     targetFilename: rawFilename,
   };
-  await setDraft(currentTabId, draft);
+  saveDraft();
   updateTargetPath();
   closeTargetEdit();
 }
@@ -431,11 +436,17 @@ targetPathEl.addEventListener('click', openTargetEdit);
 targetEditSave.addEventListener('click', saveTargetEdit);
 targetEditCancel.addEventListener('click', closeTargetEdit);
 
+// Defensive save before the popup closes so the latest draft is persisted even if
+// an async input handler was interrupted.
+window.addEventListener('beforeunload', () => {
+  saveDraft();
+});
+
 frontmatterHeader.addEventListener('click', toggleFrontmatterBody);
 
 FM_IDS.forEach((key) => {
-  fmCheckboxes[key].addEventListener('change', async () => {
-    await saveFrontmatterOverride(key, fmCheckboxes[key].checked);
+  fmCheckboxes[key].addEventListener('change', () => {
+    saveFrontmatterOverride(key, fmCheckboxes[key].checked);
     renderFrontmatter();
   });
 });
