@@ -345,6 +345,22 @@ button[type="submit"]:active {
   color: var(--accent);
 }
 
+.support-star {
+  font-size: 12px;
+  color: var(--ink-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.support-star a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.support-star a:hover {
+  text-decoration: underline;
+}
+
 .support-qr {
   padding: 1rem;
   background: var(--bg);
