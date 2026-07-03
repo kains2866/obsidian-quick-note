@@ -8,8 +8,12 @@
 </head>
 <body>
   <div class="container">
-    <h1 data-i18n="optionsTitle">Obsidian Quick Note 设置</h1>
     <form id="settings-form">
+      <div class="options-header">
+        <h1 data-i18n="optionsTitle">Obsidian Quick Note 设置</h1>
+        <button type="submit" data-i18n="saveSettings">保存设置</button>
+      </div>
+
       <label>
         <span data-i18n="vaultNameLabel">Obsidian 仓库名</span>
         <input type="text" id="vault-name" data-i18n-placeholder="vaultNamePlaceholder" placeholder="例如：MyVault" />
@@ -59,7 +63,6 @@
         <input type="text" id="default-tags" value="quick-note" data-i18n-placeholder="defaultTagsPlaceholder" placeholder="quick-note" />
       </label>
 
-      <button type="submit" data-i18n="saveSettings">保存设置</button>
       <div class="shortcut-row">
         <span id="current-shortcut" data-i18n="shortcutLoading">当前快捷键：读取中…</span>
         <button type="button" id="open-shortcuts" data-i18n="editShortcuts">编辑快捷键</button>
