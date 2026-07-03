@@ -60,6 +60,22 @@ h1 {
   margin: 0;
 }
 
+.date-format-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.date-format-row span {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.date-format-row select {
+  flex: 1;
+  min-width: 0;
+}
+
 form > label,
 fieldset {
   display: block;
