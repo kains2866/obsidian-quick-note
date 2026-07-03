@@ -107,6 +107,10 @@ export async function init(): Promise<void> {
   toggleTitle.checked = draft.includeTitle;
   toggleUrl.checked = draft.includeTitle ? false : draft.includeUrl;
 
+  // Persist the initial state immediately so it survives if the user closes the
+  // popup before init() finishes or without typing anything.
+  saveDraft();
+
   editor.focus();
 
   updateTargetPath();
@@ -114,10 +118,6 @@ export async function init(): Promise<void> {
   renderFrontmatter();
   localizePage();
   localizePlaceholders();
-
-  // Persist the initial state (e.g. selected text prefill) so it survives if the
-  // user closes the popup without typing anything.
-  saveDraft();
 }
 
 export function getComputedFolder(date = new Date()): string {
