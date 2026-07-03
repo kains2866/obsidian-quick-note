@@ -114,6 +114,10 @@ export async function init(): Promise<void> {
   renderFrontmatter();
   localizePage();
   localizePlaceholders();
+
+  // Persist the initial state (e.g. selected text prefill) so it survives if the
+  // user closes the popup without typing anything.
+  saveDraft();
 }
 
 export function getComputedFolder(date = new Date()): string {
@@ -217,7 +221,7 @@ export function updateCharCount(): void {
 }
 
 export function saveDraft(): void {
-  if (!currentTabId) return;
+  if (!currentTabId || typeof chrome === 'undefined') return;
   draft = getCurrentDraft();
   allDrafts = { ...allDrafts, [currentTabId]: draft };
   chrome.storage.local.set({ [STORAGE_KEYS.drafts]: allDrafts });
