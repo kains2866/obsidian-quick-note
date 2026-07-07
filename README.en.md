@@ -2,6 +2,8 @@
 
 A Chrome extension to quickly capture Markdown notes from any web page and save them to your Obsidian vault.
 
+[中文 README](./README.md) | [Chrome Web Store](https://chromewebstore.google.com/detail/obsidian-quick-note/bccahfklfpcbicdgbcakjmjpbeomlhef)
+
 > The legacy version (based on Local REST API) is backed up at: `obsidian-quick-note (old)/`
 
 ## Features
@@ -25,6 +27,15 @@ A Chrome extension to quickly capture Markdown notes from any web page and save 
 - Know your **Obsidian vault name** (the name shown in the bottom-left corner of Obsidian).
 
 ## Install the Extension
+
+### Install from Web Store (Recommended)
+
+- [Chrome Web Store](https://chromewebstore.google.com/detail/obsidian-quick-note/bccahfklfpcbicdgbcakjmjpbeomlhef)
+- Edge Add-ons (coming soon)
+
+### Manual Install
+
+For developers or anyone who wants the latest unreleased version:
 
 ```bash
 npm install
