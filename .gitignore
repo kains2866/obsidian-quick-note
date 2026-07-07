@@ -1,7 +1,8 @@
 node_modules/
 dist/
 coverage/
-docs/
+
+# docs/ moved to workspace level; see ../docs/
 .DS_Store
 *.log
 .env
