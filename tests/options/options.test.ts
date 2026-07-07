@@ -19,6 +19,7 @@ const FORM_HTML = `
     <input type="text" id="base-folder" value="速记" />
     <input type="text" id="date-template" value="{{YYYY}}/{{MM}}" />
     <input type="checkbox" id="include-selected-text" />
+    <input type="checkbox" id="preserve-images-in-selection" checked />
     <select id="date-format">
       <option value="date">YYYY-MM-DD</option>
       <option value="datetime">YYYY-MM-DD HH:mm:ss</option>
@@ -169,6 +170,16 @@ describe('options page', () => {
       expect(settings.includeFrontmatterSite).toBe(true);
       expect(settings.includeFrontmatterTags).toBe(false);
     });
+
+    it('maps preserveImagesInSelection checkbox to boolean', async () => {
+      const { readSettings } = await loadOptions();
+
+      (document.getElementById('preserve-images-in-selection') as HTMLInputElement).checked = false;
+
+      const settings = readSettings();
+
+      expect(settings.preserveImagesInSelection).toBe(false);
+    });
   });
 
   describe('loadSettings flow', () => {
@@ -191,6 +202,9 @@ describe('options page', () => {
       expect(
         (document.getElementById('include-selected-text') as HTMLInputElement).checked,
       ).toBe(DEFAULT_SETTINGS.includeSelectedText);
+      expect(
+        (document.getElementById('preserve-images-in-selection') as HTMLInputElement).checked,
+      ).toBe(DEFAULT_SETTINGS.preserveImagesInSelection);
       expect(
         (document.getElementById('fm-title') as HTMLInputElement).checked,
       ).toBe(DEFAULT_SETTINGS.includeFrontmatterTitle);

@@ -23,6 +23,7 @@ async function loadContent(): Promise<ContentModule> {
 
 describe('content helpers', () => {
   beforeEach(() => {
+    vi.unstubAllGlobals();
     mockWriteText.mockReset();
     document.title = 'Test Page Title';
     window.history.pushState({}, '', '/test-path?query=1');
@@ -196,6 +197,178 @@ describe('content helpers', () => {
 
       expect(success).toBe(true);
       expect(execCommandSpy).toHaveBeenCalledWith('copy');
+    });
+  });
+
+  describe('extractSelectedContent', () => {
+    it('returns empty string when there is no selection', async () => {
+      const { extractSelectedContent } = await loadContent();
+      expect(extractSelectedContent(window.getSelection())).toBe('');
+    });
+
+    it('returns plain text for a text-only selection', async () => {
+      const { extractSelectedContent } = await loadContent();
+      const p = document.createElement('p');
+      p.textContent = 'hello world';
+      document.body.appendChild(p);
+
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      expect(extractSelectedContent(selection)).toBe('hello world');
+      document.body.removeChild(p);
+    });
+
+    it('returns markdown image when only an image is selected', async () => {
+      const { extractSelectedContent } = await loadContent();
+      const img = document.createElement('img');
+      img.src = 'https://example.com/chart.png';
+      img.alt = 'data chart';
+      img.width = 200;
+      img.height = 200;
+      document.body.appendChild(img);
+
+      const range = document.createRange();
+      range.selectNode(img);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      expect(extractSelectedContent(selection)).toBe('![data chart](https://example.com/chart.png)');
+      document.body.removeChild(img);
+    });
+
+    it('inserts image markdown at the correct position within text', async () => {
+      const { extractSelectedContent } = await loadContent();
+      const p = document.createElement('p');
+      p.appendChild(document.createTextNode('before '));
+      const img = document.createElement('img');
+      img.src = 'https://example.com/img.png';
+      img.alt = 'inline';
+      img.width = 100;
+      img.height = 100;
+      p.appendChild(img);
+      p.appendChild(document.createTextNode(' after'));
+      document.body.appendChild(p);
+
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      expect(extractSelectedContent(selection)).toBe('before ![inline](https://example.com/img.png) after');
+      document.body.removeChild(p);
+    });
+
+    it('filters out images smaller than 20x20', async () => {
+      const { extractSelectedContent } = await loadContent();
+      const p = document.createElement('p');
+      p.appendChild(document.createTextNode('text '));
+      const img = document.createElement('img');
+      img.src = 'https://example.com/pixel.png';
+      img.width = 1;
+      img.height = 1;
+      p.appendChild(img);
+      document.body.appendChild(p);
+
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      expect(extractSelectedContent(selection)).toBe('text');
+      document.body.removeChild(p);
+    });
+
+    it('prefers data-src over src for lazy-loaded images', async () => {
+      const { extractSelectedContent } = await loadContent();
+      const p = document.createElement('p');
+      const img = document.createElement('img');
+      img.src = 'placeholder.png';
+      img.dataset.src = 'https://example.com/lazy.png';
+      img.alt = 'lazy';
+      img.width = 100;
+      img.height = 100;
+      p.appendChild(img);
+      document.body.appendChild(p);
+
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      expect(extractSelectedContent(selection)).toBe('![lazy](https://example.com/lazy.png)');
+      document.body.removeChild(p);
+    });
+
+    it('converts relative image urls to absolute', async () => {
+      const { extractSelectedContent } = await loadContent();
+      const p = document.createElement('p');
+      const img = document.createElement('img');
+      img.src = '/assets/photo.jpg';
+      img.alt = 'photo';
+      img.width = 100;
+      img.height = 100;
+      p.appendChild(img);
+      document.body.appendChild(p);
+
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      expect(extractSelectedContent(selection)).toContain('http://localhost:');
+      expect(extractSelectedContent(selection)).toContain('/assets/photo.jpg');
+      document.body.removeChild(p);
+    });
+
+    it('skips images without a usable src', async () => {
+      const { extractSelectedContent } = await loadContent();
+      const p = document.createElement('p');
+      p.appendChild(document.createTextNode('text '));
+      const img = document.createElement('img');
+      img.alt = 'no src';
+      img.width = 100;
+      img.height = 100;
+      p.appendChild(img);
+      document.body.appendChild(p);
+
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      expect(extractSelectedContent(selection)).toBe('text');
+      document.body.removeChild(p);
+    });
+
+    it('separates multiple paragraphs with blank lines', async () => {
+      const { extractSelectedContent } = await loadContent();
+      const article = document.createElement('article');
+      const p1 = document.createElement('p');
+      p1.textContent = 'first paragraph';
+      const p2 = document.createElement('p');
+      p2.textContent = 'second paragraph';
+      article.appendChild(p1);
+      article.appendChild(p2);
+      document.body.appendChild(article);
+
+      const range = document.createRange();
+      range.selectNodeContents(article);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      expect(extractSelectedContent(selection)).toBe('first paragraph\n\nsecond paragraph');
+      document.body.removeChild(article);
     });
   });
 
