@@ -14,7 +14,7 @@ A Chrome extension to quickly capture Markdown notes from any web page and save 
 - Temporarily override Frontmatter settings and preview actual values in popup
 - Use page title / URL to generate filename
 - Selected text can be automatically inserted into the note body
-- Image links inside selected content are preserved in their original position
+- Image links inside selected content are preserved in their original position (works for standard `<img>` pages; sites using Shadow DOM / Canvas such as some comment sections may not be extractable)
 - Auto-download fallback `.md` file if saving fails
 - Draft auto-save and restore
 - Temporary override of target folder and filename
