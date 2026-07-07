@@ -445,43 +445,27 @@ function getHostname(): string {
   }
 }
 
+// Only treat semantic block elements as block-level for Markdown conversion.
+// Generic containers such as <div>, <section>, <article> are intentionally
+// excluded to avoid producing excessive blank lines when sites nest wrappers
+// around paragraphs (common in comment sections and component-based UIs).
 const BLOCK_TAGS = new Set([
-  'ADDRESS',
-  'ARTICLE',
-  'ASIDE',
   'BLOCKQUOTE',
-  'DETAILS',
-  'DIALOG',
   'DD',
-  'DIV',
-  'DL',
   'DT',
-  'FIELDSET',
   'FIGCAPTION',
-  'FIGURE',
-  'FOOTER',
-  'FORM',
   'H1',
   'H2',
   'H3',
   'H4',
   'H5',
   'H6',
-  'HEADER',
-  'HGROUP',
   'HR',
   'LI',
-  'MAIN',
-  'NAV',
-  'OL',
   'P',
   'PRE',
-  'SECTION',
-  'TABLE',
   'TD',
   'TH',
-  'TR',
-  'UL',
 ]);
 
 function isBlockElement(el: Element): boolean {
@@ -500,7 +484,10 @@ function getImageSource(img: HTMLImageElement): string {
 
 function resolveImageUrl(src: string): string {
   if (!src) return '';
-  if (/^(data:|https?:|blob:)/i.test(src)) return src;
+  // Blob URLs are temporary and will be invalid once the page is closed,
+  // so there is no point in preserving them in a note.
+  if (/^blob:/i.test(src)) return '';
+  if (/^(data:|https?:)/i.test(src)) return src;
   try {
     return new URL(src, window.location.href).href;
   } catch {
@@ -527,6 +514,10 @@ function nodeToMarkdown(node: Node): string {
 
   if (node.nodeType === Node.ELEMENT_NODE) {
     const el = node as Element;
+
+    if (el.tagName === 'BR') {
+      return '\n';
+    }
 
     if (el.tagName === 'IMG') {
       const img = el as HTMLImageElement;

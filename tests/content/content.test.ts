@@ -30,6 +30,10 @@ describe('content helpers', () => {
     window.getSelection()?.removeAllRanges();
   });
 
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
   describe('getPageInfo', () => {
     it('returns url, title, and empty selectedText', async () => {
       const { getPageInfo } = await loadContent();
@@ -369,6 +373,71 @@ describe('content helpers', () => {
 
       expect(extractSelectedContent(selection)).toBe('first paragraph\n\nsecond paragraph');
       document.body.removeChild(article);
+    });
+
+    it('does not add excessive blank lines around nested wrapper divs', async () => {
+      const { extractSelectedContent } = await loadContent();
+      const wrapper = document.createElement('div');
+      wrapper.className = 'comment-wrapper';
+      const inner = document.createElement('div');
+      inner.className = 'comment-content';
+      const p1 = document.createElement('p');
+      p1.textContent = 'line one';
+      const p2 = document.createElement('p');
+      p2.textContent = 'line two';
+      inner.appendChild(p1);
+      inner.appendChild(p2);
+      wrapper.appendChild(inner);
+      document.body.appendChild(wrapper);
+
+      const range = document.createRange();
+      range.selectNodeContents(wrapper);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      expect(extractSelectedContent(selection)).toBe('line one\n\nline two');
+      document.body.removeChild(wrapper);
+    });
+
+    it('preserves line breaks from <br> tags', async () => {
+      const { extractSelectedContent } = await loadContent();
+      const p = document.createElement('p');
+      p.appendChild(document.createTextNode('line one'));
+      p.appendChild(document.createElement('br'));
+      p.appendChild(document.createTextNode('line two'));
+      document.body.appendChild(p);
+
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      expect(extractSelectedContent(selection)).toBe('line one\nline two');
+      document.body.removeChild(p);
+    });
+
+    it('skips blob url images', async () => {
+      const { extractSelectedContent } = await loadContent();
+      const p = document.createElement('p');
+      p.appendChild(document.createTextNode('text '));
+      const img = document.createElement('img');
+      img.src = 'blob:https://example.com/abc123';
+      img.alt = 'blob';
+      img.width = 100;
+      img.height = 100;
+      p.appendChild(img);
+      document.body.appendChild(p);
+
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      expect(extractSelectedContent(selection)).toBe('text');
+      document.body.removeChild(p);
     });
   });
 
