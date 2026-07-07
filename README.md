@@ -2,7 +2,11 @@
 
 Chrome 浏览器扩展：点击工具栏图标，快速记录 Markdown 笔记并保存到 Obsidian。
 
+[English README](./README.en.md) | [Chrome Web Store](https://chromewebstore.google.com/detail/obsidian-quick-note/bccahfklfpcbicdgbcakjmjpbeomlhef)
+
 > 旧版（基于 Local REST API）已备份在：`obsidian-quick-note (old)/`
+
+---
 
 ## 功能特性
 
@@ -25,6 +29,15 @@ Chrome 浏览器扩展：点击工具栏图标，快速记录 Markdown 笔记并
 - 记住你的 **Obsidian 仓库名**（Obsidian 左下角显示的名称）。
 
 ## 安装扩展
+
+### 商店安装（推荐）
+
+- [Chrome Web Store](https://chromewebstore.google.com/detail/obsidian-quick-note/bccahfklfpcbicdgbcakjmjpbeomlhef)
+- Edge Add-ons（待补充）
+
+### 手动安装
+
+适用于开发者或想体验最新未发布版本：
 
 ```bash
 npm install
