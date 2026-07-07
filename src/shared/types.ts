@@ -6,6 +6,7 @@ export interface ExtensionSettings {
   dateSubfolderTemplate: string;
   dateFormat: DateFormat;
   includeSelectedText: boolean;
+  preserveImagesInSelection: boolean;
   includeFrontmatterTitle: boolean;
   includeFrontmatterDate: boolean;
   includeFrontmatterUrl: boolean;
@@ -31,6 +32,7 @@ export interface PageInfo {
   url: string;
   title: string;
   selectedText: string;
+  selectedContent?: string;
   author: string;
   description: string;
   site: string;

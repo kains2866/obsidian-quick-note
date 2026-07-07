@@ -15,6 +15,7 @@ export async function loadSettings(): Promise<void> {
   $('date-template').value = settings.dateSubfolderTemplate;
   $('date-format').value = settings.dateFormat;
   $('include-selected-text').checked = settings.includeSelectedText;
+  $('preserve-images-in-selection').checked = settings.preserveImagesInSelection;
   $('fm-title').checked = settings.includeFrontmatterTitle;
   $('fm-date').checked = settings.includeFrontmatterDate;
   $('fm-url').checked = settings.includeFrontmatterUrl;
@@ -54,6 +55,7 @@ export function readSettings(): ExtensionSettings {
     dateSubfolderTemplate: $('date-template').value.trim(),
     dateFormat,
     includeSelectedText: $('include-selected-text').checked,
+    preserveImagesInSelection: $('preserve-images-in-selection').checked,
     includeFrontmatterTitle: $('fm-title').checked,
     includeFrontmatterDate: $('fm-date').checked,
     includeFrontmatterUrl: $('fm-url').checked,

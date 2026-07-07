@@ -102,7 +102,11 @@ export async function init(): Promise<void> {
     }
   }
 
-  const selectedText = settings.includeSelectedText ? pageInfo.selectedText : '';
+  const selectedText = settings.includeSelectedText
+    ? (settings.preserveImagesInSelection
+        ? (pageInfo.selectedContent ?? pageInfo.selectedText)
+        : pageInfo.selectedText)
+    : '';
   editor.value = mergeSelectedText(draft.content, selectedText);
   toggleTitle.checked = draft.includeTitle;
   toggleUrl.checked = draft.includeTitle ? false : draft.includeUrl;

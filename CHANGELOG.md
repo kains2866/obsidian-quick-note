@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/lang/zh-CN/).
 
+## [0.3.2] - 2026-07-08
+
+### 新增
+
+- 保留框选内容中的图片链接：当用户框选的网页内容包含图片时，图片 URL 会按原始位置以 Markdown 图片语法带入正文
+- 新增设置项「保留框选内容中的图片链接」，默认开启；关闭后仅保留纯文本
+- 支持常见懒加载图片（`data-src`、`data-lazy-src`、`data-original`）
+- 自动过滤小于 20×20 像素的图片（如跟踪像素、装饰图标）
+- 自动将相对路径图片 URL 补全为绝对 URL
+
 ## [0.3.1] - 2026-07-03
 
 ### 修复

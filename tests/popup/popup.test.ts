@@ -302,6 +302,37 @@ describe('popup', () => {
       );
     });
 
+    it('prefills editor with selectedContent when preserveImagesInSelection is enabled', async () => {
+      const { init } = await loadPopup({
+        storedDraft: DEFAULT_DRAFT,
+        pageInfo: {
+          ...page,
+          selectedText: 'plain text',
+          selectedContent: 'text with ![chart](https://example.com/chart.png) image',
+        },
+      });
+      await init();
+
+      expect((document.getElementById('editor') as HTMLTextAreaElement).value).toBe(
+        'text with ![chart](https://example.com/chart.png) image',
+      );
+    });
+
+    it('prefills editor with selectedText when preserveImagesInSelection is disabled', async () => {
+      const { init } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, preserveImagesInSelection: false },
+        storedDraft: DEFAULT_DRAFT,
+        pageInfo: {
+          ...page,
+          selectedText: 'plain text',
+          selectedContent: 'text with ![chart](https://example.com/chart.png) image',
+        },
+      });
+      await init();
+
+      expect((document.getElementById('editor') as HTMLTextAreaElement).value).toBe('plain text');
+    });
+
     it('isolates drafts between tabs', async () => {
       const { init: initTab1 } = await loadPopup({
         storedDraft: { ...DEFAULT_DRAFT, content: 'tab 1 draft' },

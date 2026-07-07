@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Obsidian Quick Note",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Quickly capture Markdown notes and save them to Obsidian via Obsidian URI.",
   "icons": {
     "16": "icons/icon16.png",

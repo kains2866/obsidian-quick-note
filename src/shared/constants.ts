@@ -6,6 +6,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   dateSubfolderTemplate: '{{YYYY}}/{{MM}}',
   dateFormat: 'date',
   includeSelectedText: true,
+  preserveImagesInSelection: true,
   includeFrontmatterTitle: true,
   includeFrontmatterDate: true,
   includeFrontmatterUrl: true,

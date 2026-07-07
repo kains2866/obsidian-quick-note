@@ -445,6 +445,126 @@ function getHostname(): string {
   }
 }
 
+const BLOCK_TAGS = new Set([
+  'ADDRESS',
+  'ARTICLE',
+  'ASIDE',
+  'BLOCKQUOTE',
+  'DETAILS',
+  'DIALOG',
+  'DD',
+  'DIV',
+  'DL',
+  'DT',
+  'FIELDSET',
+  'FIGCAPTION',
+  'FIGURE',
+  'FOOTER',
+  'FORM',
+  'H1',
+  'H2',
+  'H3',
+  'H4',
+  'H5',
+  'H6',
+  'HEADER',
+  'HGROUP',
+  'HR',
+  'LI',
+  'MAIN',
+  'NAV',
+  'OL',
+  'P',
+  'PRE',
+  'SECTION',
+  'TABLE',
+  'TD',
+  'TH',
+  'TR',
+  'UL',
+]);
+
+function isBlockElement(el: Element): boolean {
+  return BLOCK_TAGS.has(el.tagName);
+}
+
+function getImageSource(img: HTMLImageElement): string {
+  return (
+    img.dataset.src ||
+    img.dataset.lazySrc ||
+    img.dataset.original ||
+    img.src ||
+    ''
+  );
+}
+
+function resolveImageUrl(src: string): string {
+  if (!src) return '';
+  if (/^(data:|https?:|blob:)/i.test(src)) return src;
+  try {
+    return new URL(src, window.location.href).href;
+  } catch {
+    return src;
+  }
+}
+
+function isVisibleImage(img: HTMLImageElement): boolean {
+  const width =
+    img.naturalWidth ||
+    parseInt(img.getAttribute('width') || '0', 10) ||
+    0;
+  const height =
+    img.naturalHeight ||
+    parseInt(img.getAttribute('height') || '0', 10) ||
+    0;
+  return width >= 20 && height >= 20;
+}
+
+function nodeToMarkdown(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent || '';
+  }
+
+  if (node.nodeType === Node.ELEMENT_NODE) {
+    const el = node as Element;
+
+    if (el.tagName === 'IMG') {
+      const img = el as HTMLImageElement;
+      if (!isVisibleImage(img)) return '';
+      const src = resolveImageUrl(getImageSource(img));
+      const alt = img.alt || '';
+      return src ? `![${alt}](${src})` : '';
+    }
+
+    const children = Array.from(el.childNodes)
+      .map(nodeToMarkdown)
+      .join('');
+
+    if (isBlockElement(el)) {
+      const trimmed = children.trim();
+      return trimmed ? `\n\n${trimmed}\n\n` : '\n\n';
+    }
+
+    return children;
+  }
+
+  return '';
+}
+
+export function fragmentToMarkdown(fragment: DocumentFragment): string {
+  const result = Array.from(fragment.childNodes)
+    .map(nodeToMarkdown)
+    .join('');
+  return result.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+export function extractSelectedContent(selection: Selection | null): string {
+  if (!selection || selection.rangeCount === 0) return '';
+  const range = selection.getRangeAt(0);
+  const fragment = range.cloneContents();
+  return fragmentToMarkdown(fragment);
+}
+
 function cleanTitle(title: string, siteName: string): string {
   if (!title) return title;
 
@@ -521,12 +641,13 @@ function getBestTitle(): string {
 }
 
 export function getPageInfo(): PageInfo {
-  const selection = window.getSelection()?.toString() ?? '';
+  const selection = window.getSelection();
 
   return {
     url: window.location.href,
     title: getBestTitle(),
-    selectedText: selection,
+    selectedText: selection?.toString() ?? '',
+    selectedContent: extractSelectedContent(selection),
     author: extractAuthor(),
     description: extractDescription(),
     site: extractSite(),
