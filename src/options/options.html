@@ -44,6 +44,11 @@
         <span data-i18n="preserveImagesInSelection">保留框选内容中的图片链接</span>
       </label>
 
+      <label class="checkbox-label">
+        <input type="checkbox" id="capture-video-progress" checked />
+        <span data-i18n="captureVideoProgress">呼出时捕获视频播放进度</span>
+      </label>
+
       <fieldset>
         <legend data-i18n="frontmatterLegend">Frontmatter</legend>
         <label><input type="checkbox" id="fm-title" /> title</label>
@@ -102,6 +107,11 @@
       <details>
         <summary data-i18n="guidePreserveImagesSummary">保留框选内容中的图片链接</summary>
         <p data-i18n="guidePreserveImagesDetail">开启后，如果框选的内容中包含图片，图片链接会以 Markdown 图片语法一并带入正文。关闭则只保留纯文本。</p>
+      </details>
+
+      <details>
+        <summary data-i18n="guideCaptureVideoProgressSummary">呼出时捕获视频播放进度</summary>
+        <p data-i18n="guideCaptureVideoProgressDetail">开启后，如果页面正在播放视频，打开插件时会自动把当前播放进度以可点击链接的形式插入草稿。支持 YouTube、Bilibili、Vimeo、Dailymotion、Twitch 等平台；其他平台会回退到当前页面链接。</p>
       </details>
 
       <details>

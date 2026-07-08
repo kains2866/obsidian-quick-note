@@ -7,7 +7,8 @@
  *
  * @see https://github.com/kepano/defuddle
  */
-import type { PageInfo } from '../shared/types.js';
+import type { PageInfo, VideoProgress } from '../shared/types.js';
+import { findPlatformRule, cleanVideoTitle } from '../shared/video-platforms.config.js';
 
 function getMetaContent(selector: string): string {
   const element = document.querySelector(selector);
@@ -507,6 +508,84 @@ function isVisibleImage(img: HTMLImageElement): boolean {
   return width >= 20 && height >= 20;
 }
 
+function formatDuration(totalSeconds: number): string {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  return [h, m, s].map((n) => String(n).padStart(2, '0')).join(':');
+}
+
+function isVisibleVideo(video: HTMLVideoElement): boolean {
+  const width = video.videoWidth || video.clientWidth || 0;
+  const height = video.videoHeight || video.clientHeight || 0;
+  return width >= 200 && height >= 150;
+}
+
+function videoScore(video: HTMLVideoElement): number {
+  let score = 0;
+  const rect = video.getBoundingClientRect();
+  const inViewport =
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= window.innerHeight &&
+    rect.right <= window.innerWidth;
+  if (inViewport) score += 100;
+  // Prefer intrinsic video dimensions when rendered rect is unavailable.
+  const width = rect.width || video.videoWidth || video.clientWidth || 1;
+  const height = rect.height || video.videoHeight || video.clientHeight || 1;
+  score += (width * height) / 10000;
+  if (!video.paused && !video.ended) score += 50;
+  return score;
+}
+
+function pickMainVideo(videos: HTMLVideoElement[]): HTMLVideoElement | null {
+  if (videos.length === 0) return null;
+  if (videos.length === 1) return videos[0];
+
+  const candidates = videos.filter(isVisibleVideo);
+  if (candidates.length === 0) return null;
+
+  candidates.sort((a, b) => videoScore(b) - videoScore(a));
+  return candidates[0];
+}
+
+function buildTimeJumpLink(pageUrl: string, seconds: number): string {
+  const rule = findPlatformRule(pageUrl);
+  if (!rule.supportsTimeParam || !rule.timeParam || !rule.formatTime) {
+    return pageUrl;
+  }
+
+  try {
+    const next = new URL(pageUrl);
+    next.searchParams.set(rule.timeParam, rule.formatTime(seconds));
+    if (rule.autoplayParam) {
+      next.searchParams.set(rule.autoplayParam, '0');
+    }
+    return next.href;
+  } catch {
+    return pageUrl;
+  }
+}
+
+export function extractVideoProgress(): VideoProgress | null {
+  const videos = Array.from(document.querySelectorAll('video'));
+  const candidate = pickMainVideo(videos);
+  if (!candidate || candidate.paused || candidate.ended) return null;
+
+  const currentSeconds = Math.floor(candidate.currentTime);
+  const durationSeconds = Math.floor(candidate.duration || 0);
+  const rule = findPlatformRule(window.location.href);
+  const title = cleanVideoTitle(document.title, rule);
+
+  return {
+    currentTime: formatDuration(currentSeconds),
+    duration: formatDuration(durationSeconds),
+    title,
+    link: buildTimeJumpLink(window.location.href, currentSeconds),
+    platform: rule.name,
+  };
+}
+
 function nodeToMarkdown(node: Node): string {
   if (node.nodeType === Node.TEXT_NODE) {
     return node.textContent || '';
@@ -642,6 +721,7 @@ export function getPageInfo(): PageInfo {
     author: extractAuthor(),
     description: extractDescription(),
     site: extractSite(),
+    videoProgress: extractVideoProgress(),
   };
 }
 

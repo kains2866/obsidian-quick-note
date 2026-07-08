@@ -465,4 +465,116 @@ describe('content helpers', () => {
       expect(sendResponse).toHaveBeenCalledWith({ success: true });
     });
   });
+
+  describe('extractVideoProgress', () => {
+    it('returns null when there is no video element', async () => {
+      const { extractVideoProgress } = await loadContent();
+      expect(extractVideoProgress()).toBeNull();
+    });
+
+    it('returns null when the only video is paused', async () => {
+      const { extractVideoProgress } = await loadContent();
+      const video = createTestVideo({ currentTime: 272, duration: 754, paused: true });
+      document.body.appendChild(video);
+
+      expect(extractVideoProgress()).toBeNull();
+
+      document.body.removeChild(video);
+    });
+
+    it('returns progress for a playing video', async () => {
+      const { extractVideoProgress } = await loadContent();
+      document.title = 'Test Video Title';
+      const video = createTestVideo({ currentTime: 272, duration: 754, paused: false });
+      document.body.appendChild(video);
+
+      const progress = extractVideoProgress();
+
+      expect(progress).not.toBeNull();
+      expect(progress?.currentTime).toBe('00:04:32');
+      expect(progress?.duration).toBe('00:12:34');
+      expect(progress?.title).toBe('Test Video Title');
+      expect(progress?.link).toBeDefined();
+
+      document.body.removeChild(video);
+    });
+
+    it('picks the largest visible playing video when multiple exist', async () => {
+      const { extractVideoProgress } = await loadContent();
+      document.title = 'Main Video';
+      const small = createTestVideo({
+        currentTime: 10,
+        duration: 100,
+        paused: false,
+        width: 200,
+        height: 150,
+      });
+      const large = createTestVideo({
+        currentTime: 272,
+        duration: 754,
+        paused: false,
+        width: 1280,
+        height: 720,
+      });
+      document.body.appendChild(small);
+      document.body.appendChild(large);
+
+      const progress = extractVideoProgress();
+
+      expect(progress?.currentTime).toBe('00:04:32');
+      document.body.removeChild(small);
+      document.body.removeChild(large);
+    });
+  });
+
+  describe('getPageInfo with video', () => {
+    it('includes videoProgress when a video is playing', async () => {
+      const { getPageInfo } = await loadContent();
+      document.title = 'Video Page';
+      const video = createTestVideo({ currentTime: 60, duration: 120, paused: false });
+      document.body.appendChild(video);
+
+      const info = getPageInfo();
+
+      expect(info.videoProgress).toBeDefined();
+      expect(info.videoProgress?.currentTime).toBe('00:01:00');
+
+      document.body.removeChild(video);
+    });
+  });
 });
+
+function createTestVideo(options: {
+  currentTime: number;
+  duration: number;
+  paused: boolean;
+  width?: number;
+  height?: number;
+}): HTMLVideoElement {
+  const video = document.createElement('video');
+  Object.defineProperty(video, 'currentTime', {
+    value: options.currentTime,
+    configurable: true,
+  });
+  Object.defineProperty(video, 'duration', {
+    value: options.duration,
+    configurable: true,
+  });
+  Object.defineProperty(video, 'paused', {
+    value: options.paused,
+    configurable: true,
+  });
+  Object.defineProperty(video, 'ended', {
+    value: false,
+    configurable: true,
+  });
+  Object.defineProperty(video, 'videoWidth', {
+    value: options.width ?? 640,
+    configurable: true,
+  });
+  Object.defineProperty(video, 'videoHeight', {
+    value: options.height ?? 360,
+    configurable: true,
+  });
+  return video;
+}
