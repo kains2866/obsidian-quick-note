@@ -1,16 +1,17 @@
 import { t } from '../shared/i18n.js';
 import { removeDraft } from '../shared/storage.js';
+import { CONTEXT_MENU_ITEM_ID, EXTENSION_NAME } from '../shared/constants.js';
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
-    id: 'open-obsidian-quick-note',
-    title: 'Obsidian Quick Note',
+    id: CONTEXT_MENU_ITEM_ID,
+    title: EXTENSION_NAME,
     contexts: ['page', 'selection', 'link'],
   });
 });
 
 chrome.contextMenus.onClicked.addListener((info) => {
-  if (info.menuItemId === 'open-obsidian-quick-note') {
+  if (info.menuItemId === CONTEXT_MENU_ITEM_ID) {
     try {
       chrome.action.openPopup();
     } catch {

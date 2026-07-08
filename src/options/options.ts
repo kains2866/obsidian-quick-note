@@ -1,12 +1,35 @@
 import { getSettings, setSettings } from '../shared/storage.js';
-import { DEFAULT_SETTINGS } from '../shared/constants.js';
+import {
+  DEFAULT_SETTINGS,
+  EXTENSION_NAME,
+  AUTHOR_NAME,
+  AUTHOR_EMAIL,
+  GITHUB_REPO_URL,
+} from '../shared/constants.js';
 import { renderTemplate } from '../shared/templates.js';
 import { getLanguage, t, localizePage, localizePlaceholders } from '../shared/i18n.js';
 import type { ExtensionSettings, DateFormat } from '../shared/types.js';
 
 document.documentElement.lang = getLanguage();
+document.title = t('optionsTitle');
 
 const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
+
+function initFooterMetadata(): void {
+  const authorEl = document.getElementById('footer-author-name');
+  if (authorEl) authorEl.textContent = AUTHOR_NAME;
+
+  const githubLink = document.getElementById('footer-github-link') as HTMLAnchorElement | null;
+  if (githubLink) githubLink.href = GITHUB_REPO_URL;
+
+  const emailLink = document.getElementById('footer-email-link') as HTMLAnchorElement | null;
+  if (emailLink) emailLink.href = `mailto:${AUTHOR_EMAIL}`;
+
+  const starLink = document.getElementById('support-star-link') as HTMLAnchorElement | null;
+  if (starLink) starLink.href = GITHUB_REPO_URL;
+}
+
+initFooterMetadata();
 
 export async function loadSettings(): Promise<void> {
   const settings = await getSettings();

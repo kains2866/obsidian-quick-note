@@ -6,6 +6,7 @@ import {
   localizePlaceholders,
   messages,
 } from '../../src/shared/i18n.js';
+import { EXTENSION_NAME } from '../../src/shared/constants.js';
 
 describe('i18n', () => {
   let originalLanguage: PropertyDescriptor | undefined;
@@ -105,5 +106,15 @@ describe('i18n', () => {
     } finally {
       messages['zh-CN'] = originalZhMessages;
     }
+  });
+
+  it('replaces the extension name placeholder in optionsTitle', () => {
+    setNavigatorLanguage('en-US');
+    expect(t('optionsTitle')).toBe(`${EXTENSION_NAME} Settings`);
+  });
+
+  it('replaces the extension name placeholder in Chinese optionsTitle', () => {
+    setNavigatorLanguage('zh-CN');
+    expect(t('optionsTitle')).toBe(`${EXTENSION_NAME} 设置`);
   });
 });
