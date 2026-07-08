@@ -7,7 +7,12 @@ import {
   afterEach,
   type Mock,
 } from 'vitest';
-import { DEFAULT_SETTINGS } from '../../src/shared/constants.js';
+import {
+  DEFAULT_SETTINGS,
+  AUTHOR_NAME,
+  AUTHOR_EMAIL,
+  GITHUB_REPO_URL,
+} from '../../src/shared/constants.js';
 import { t } from '../../src/shared/i18n.js';
 import type { ExtensionSettings } from '../../src/shared/types.js';
 
@@ -307,6 +312,36 @@ describe('options page', () => {
       expect(chrome.storage.local.set).toHaveBeenCalledWith({
         'oqn:settings': expected,
       });
+    });
+  });
+
+  describe('footer metadata', () => {
+    it('renders author name, github link and email from constants', async () => {
+      document.body.innerHTML = `
+        <form id="settings-form"></form>
+        <footer>
+          <strong class="author-name" id="footer-author-name"></strong>
+          <a id="footer-github-link" href="#">GitHub</a>
+          <a id="footer-email-link" href="#">Email</a>
+          <a id="support-star-link" href="#">Star</a>
+        </footer>
+      `;
+      vi.stubGlobal('chrome', chromeMock());
+      vi.resetModules();
+      await import('../../src/options/options.js');
+
+      expect(document.getElementById('footer-author-name')?.textContent).toBe(AUTHOR_NAME);
+      expect((document.getElementById('footer-github-link') as HTMLAnchorElement).href).toBe(
+        GITHUB_REPO_URL,
+      );
+      expect((document.getElementById('footer-email-link') as HTMLAnchorElement).href).toBe(
+        `mailto:${AUTHOR_EMAIL}`,
+      );
+      expect((document.getElementById('support-star-link') as HTMLAnchorElement).href).toBe(
+        GITHUB_REPO_URL,
+      );
+
+      vi.unstubAllGlobals();
     });
   });
 

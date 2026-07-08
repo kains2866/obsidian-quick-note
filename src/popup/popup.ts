@@ -1,5 +1,5 @@
 import { getSettings, getAllDrafts, clearDraft } from '../shared/storage.js';
-import { DEFAULT_DRAFT, STORAGE_KEYS } from '../shared/constants.js';
+import { DEFAULT_DRAFT, STORAGE_KEYS, EXTENSION_NAME } from '../shared/constants.js';
 import { mergeSelectedText } from '../shared/draft-utils.js';
 import {
   renderTemplate,
@@ -12,6 +12,7 @@ import { getLanguage, t, localizePage, localizePlaceholders } from '../shared/i1
 import type { PageInfo, Draft, ExtensionSettings, FrontmatterKey, VideoProgress } from '../shared/types.js';
 
 document.documentElement.lang = getLanguage();
+document.title = EXTENSION_NAME;
 
 function parseTimeToSeconds(time: string): number {
   const parts = time.split(':').map((p) => parseInt(p, 10));

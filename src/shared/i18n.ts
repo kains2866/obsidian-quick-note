@@ -1,3 +1,5 @@
+import { EXTENSION_NAME } from './constants.js';
+
 export type Language = 'zh-CN' | 'en';
 
 export function getLanguage(): Language {
@@ -38,7 +40,7 @@ export const messages: Record<Language, Record<string, string>> = {
     saveFailedDownloadFailed: '保存失败：{error}；兜底下载也失败：{downloadError}',
 
     // options
-    optionsTitle: 'Obsidian Quick Note 设置',
+    optionsTitle: '{name} 设置',
     vaultNameLabel: 'Obsidian 仓库名',
     vaultNamePlaceholder: '例如：MyVault',
     vaultNameHint: '在 Obsidian 左下角看到的仓库名称，必须完全一致。',
@@ -139,7 +141,7 @@ export const messages: Record<Language, Record<string, string>> = {
     saveFailedDownloadFailed: 'Save failed: {error}; fallback download also failed: {downloadError}',
 
     // options
-    optionsTitle: 'Obsidian Quick Note Settings',
+    optionsTitle: '{name} Settings',
     vaultNameLabel: 'Obsidian vault name',
     vaultNamePlaceholder: 'e.g. MyVault',
     vaultNameHint: 'The vault name shown in the bottom-left corner of Obsidian. Must match exactly.',
@@ -216,6 +218,9 @@ export const messages: Record<Language, Record<string, string>> = {
 export function t(key: string, replacements?: Record<string, string>): string {
   const lang = getLanguage();
   let text = messages[lang][key] ?? messages['en'][key] ?? key;
+  // Replace the extension name placeholder first so callers can still override
+  // it via replacements if they ever need to.
+  text = text.replace(/\{name\}/g, EXTENSION_NAME);
   if (replacements) {
     Object.entries(replacements).forEach(([name, value]) => {
       text = text.replace(new RegExp(`\\{${name}\\}`, 'g'), () => value);
