@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/lang/zh-CN/).
 
+## [0.3.3] - 2026-07-08
+
+### 新增
+
+- 呼出时捕获视频播放进度：页面正在播放视频时打开插件，自动把当前进度以可点击链接插入草稿
+- 支持 YouTube、Bilibili、Vimeo、Dailymotion、Twitch 等主流平台；不支持的平台回退到当前页面链接
+- 同一视频连续呼出时自动去重，避免重复插入相同进度
+
+### 重构
+
+- 将扩展名称、作者信息、GitHub 链接、默认标签、右键菜单 ID 等硬编码统一抽到 `src/shared/constants.ts`
+- 构建时从常量注入 manifest 的 `name` 与快捷键命令描述，避免多处命名不一致
+
 ## [0.3.2] - 2026-07-08
 
 ### 新增
