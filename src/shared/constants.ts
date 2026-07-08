@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   includeFrontmatterDescription: false,
   includeFrontmatterSite: false,
   defaultTags: ['quick-note'],
+  captureVideoProgress: true,
 };
 
 export const DEFAULT_DRAFT: Draft = {

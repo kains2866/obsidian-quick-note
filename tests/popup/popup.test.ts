@@ -333,6 +333,136 @@ describe('popup', () => {
       expect((document.getElementById('editor') as HTMLTextAreaElement).value).toBe('plain text');
     });
 
+    it('appends video progress link when capture is enabled and video is playing', async () => {
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        content: 'existing draft',
+      };
+      const { init } = await loadPopup({
+        storedDraft,
+        pageInfo: {
+          ...page,
+          videoProgress: {
+            currentTime: '00:04:32',
+            duration: '00:12:34',
+            title: 'Test Video',
+            link: 'https://example.com/watch?t=272',
+            platform: 'generic',
+          },
+        },
+      });
+      await init();
+
+      const value = (document.getElementById('editor') as HTMLTextAreaElement).value;
+      expect(value).toContain('existing draft');
+      expect(value).toContain('[(00:04:32/00:12:34)Test Video](https://example.com/watch?t=272)');
+    });
+
+    it('does not append video progress link when capture is disabled', async () => {
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        content: 'existing draft',
+      };
+      const { init } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, captureVideoProgress: false },
+        storedDraft,
+        pageInfo: {
+          ...page,
+          videoProgress: {
+            currentTime: '00:04:32',
+            duration: '00:12:34',
+            title: 'Test Video',
+            link: 'https://example.com/watch?t=272',
+            platform: 'generic',
+          },
+        },
+      });
+      await init();
+
+      const value = (document.getElementById('editor') as HTMLTextAreaElement).value;
+      expect(value).toBe('existing draft');
+    });
+
+    it('places video link before selected text', async () => {
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        content: 'existing draft',
+      };
+      const { init } = await loadPopup({
+        storedDraft,
+        pageInfo: {
+          ...page,
+          selectedText: 'highlighted passage',
+          videoProgress: {
+            currentTime: '00:04:32',
+            duration: '00:12:34',
+            title: 'Test Video',
+            link: 'https://example.com/watch?t=272',
+            platform: 'generic',
+          },
+        },
+      });
+      await init();
+
+      const value = (document.getElementById('editor') as HTMLTextAreaElement).value;
+      expect(value).toBe(
+        'existing draft\n\n[(00:04:32/00:12:34)Test Video](https://example.com/watch?t=272)\n\nhighlighted passage',
+      );
+    });
+
+    it('does not duplicate video link when progress is unchanged', async () => {
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        content: 'existing draft\n\n[(00:04:32/00:12:34)Test Video](https://example.com/watch?t=272)',
+        lastVideoProgress: { currentTime: 272, url: 'https://example.com/path?x=1' },
+      };
+      const { init } = await loadPopup({
+        storedDraft,
+        pageInfo: {
+          ...page,
+          videoProgress: {
+            currentTime: '00:04:32',
+            duration: '00:12:34',
+            title: 'Test Video',
+            link: 'https://example.com/watch?t=272',
+            platform: 'generic',
+          },
+        },
+      });
+      await init();
+
+      const value = (document.getElementById('editor') as HTMLTextAreaElement).value;
+      expect(value).toBe(
+        'existing draft\n\n[(00:04:32/00:12:34)Test Video](https://example.com/watch?t=272)',
+      );
+    });
+
+    it('appends a new video link when progress changes', async () => {
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        content: 'existing draft\n\n[(00:04:32/00:12:34)Test Video](https://example.com/watch?t=272)',
+        lastVideoProgress: { currentTime: 272, url: 'https://example.com/path?x=1' },
+      };
+      const { init } = await loadPopup({
+        storedDraft,
+        pageInfo: {
+          ...page,
+          videoProgress: {
+            currentTime: '00:05:00',
+            duration: '00:12:34',
+            title: 'Test Video',
+            link: 'https://example.com/watch?t=300',
+            platform: 'generic',
+          },
+        },
+      });
+      await init();
+
+      const value = (document.getElementById('editor') as HTMLTextAreaElement).value;
+      expect(value).toContain('[(00:04:32/00:12:34)Test Video](https://example.com/watch?t=272)');
+      expect(value).toContain('[(00:05:00/00:12:34)Test Video](https://example.com/watch?t=300)');
+    });
+
     it('isolates drafts between tabs', async () => {
       const { init: initTab1 } = await loadPopup({
         storedDraft: { ...DEFAULT_DRAFT, content: 'tab 1 draft' },

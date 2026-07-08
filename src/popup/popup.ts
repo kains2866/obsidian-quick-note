@@ -9,9 +9,37 @@ import {
   formatFrontmatterDate,
 } from '../shared/templates.js';
 import { getLanguage, t, localizePage, localizePlaceholders } from '../shared/i18n.js';
-import type { PageInfo, Draft, ExtensionSettings, FrontmatterKey } from '../shared/types.js';
+import type { PageInfo, Draft, ExtensionSettings, FrontmatterKey, VideoProgress } from '../shared/types.js';
 
 document.documentElement.lang = getLanguage();
+
+function parseTimeToSeconds(time: string): number {
+  const parts = time.split(':').map((p) => parseInt(p, 10));
+  if (parts.length !== 3 || parts.some(isNaN)) return 0;
+  return parts[0] * 3600 + parts[1] * 60 + parts[2];
+}
+
+function formatVideoProgressLink(progress: VideoProgress): string {
+  return `[(${progress.currentTime}/${progress.duration})${progress.title}](${progress.link})`;
+}
+
+function appendVideoProgressToDraft(draft: Draft, progress: VideoProgress, pageUrl: string): Draft {
+  const currentSeconds = parseTimeToSeconds(progress.currentTime);
+  const isSameProgress =
+    draft.lastVideoProgress?.currentTime === currentSeconds &&
+    draft.lastVideoProgress?.url === pageUrl;
+
+  if (isSameProgress) return draft;
+
+  const link = formatVideoProgressLink(progress);
+  const newContent = draft.content ? `${draft.content}\n\n${link}` : link;
+
+  return {
+    ...draft,
+    content: newContent,
+    lastVideoProgress: { currentTime: currentSeconds, url: pageUrl },
+  };
+}
 
 const editor = document.getElementById('editor') as HTMLTextAreaElement;
 const toggleUrl = document.getElementById('toggle-url') as HTMLInputElement;
@@ -102,6 +130,10 @@ export async function init(): Promise<void> {
     }
   }
 
+  if (settings.captureVideoProgress && pageInfo.videoProgress) {
+    draft = appendVideoProgressToDraft(draft, pageInfo.videoProgress, pageInfo.url);
+  }
+
   const selectedText = settings.includeSelectedText
     ? (settings.preserveImagesInSelection
         ? (pageInfo.selectedContent ?? pageInfo.selectedText)
@@ -148,6 +180,7 @@ export function getCurrentDraft(): Draft {
     targetFolder: draft.targetFolder,
     targetFilename: draft.targetFilename,
     frontmatterOverrides: draft.frontmatterOverrides,
+    lastVideoProgress: draft.lastVideoProgress,
   };
 }
 

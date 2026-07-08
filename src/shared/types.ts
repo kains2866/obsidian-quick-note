@@ -15,6 +15,7 @@ export interface ExtensionSettings {
   includeFrontmatterDescription: boolean;
   includeFrontmatterSite: boolean;
   defaultTags: string[];
+  captureVideoProgress: boolean;
 }
 
 export type FrontmatterKey = 'title' | 'date' | 'url' | 'author' | 'description' | 'site' | 'tags';
@@ -26,6 +27,10 @@ export interface Draft {
   targetFolder: string;
   targetFilename: string;
   frontmatterOverrides?: Partial<Record<FrontmatterKey, boolean>>;
+  lastVideoProgress?: {
+    currentTime: number;
+    url: string;
+  };
 }
 
 export interface PageInfo {
@@ -36,10 +41,19 @@ export interface PageInfo {
   author: string;
   description: string;
   site: string;
+  videoProgress?: VideoProgress | null;
 }
 
 export interface SaveResult {
   success: boolean;
   error?: string;
   path?: string;
+}
+
+export interface VideoProgress {
+  currentTime: string;
+  duration: string;
+  title: string;
+  link: string;
+  platform: string;
 }
