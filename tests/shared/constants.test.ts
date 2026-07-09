@@ -18,6 +18,14 @@ describe('DEFAULT_SETTINGS', () => {
   it('uses DEFAULT_TAG as the first default tag', () => {
     expect(DEFAULT_SETTINGS.defaultTags).toEqual([DEFAULT_TAG]);
   });
+
+  it('has autoSelectFirstTag enabled by default', () => {
+    expect(DEFAULT_SETTINGS.autoSelectFirstTag).toBe(true);
+  });
+
+  it('has empty domainTagRules by default', () => {
+    expect(DEFAULT_SETTINGS.domainTagRules).toEqual([]);
+  });
 });
 
 describe('branding constants', () => {

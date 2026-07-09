@@ -25,6 +25,8 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   includeFrontmatterDescription: false,
   includeFrontmatterSite: false,
   defaultTags: [DEFAULT_TAG],
+  autoSelectFirstTag: true,
+  domainTagRules: [],
   captureVideoProgress: true,
 };
 

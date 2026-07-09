@@ -15,6 +15,8 @@ export interface ExtensionSettings {
   includeFrontmatterDescription: boolean;
   includeFrontmatterSite: boolean;
   defaultTags: string[];
+  autoSelectFirstTag: boolean;
+  domainTagRules: Array<{ domain: string; tags: string[] }>;
   captureVideoProgress: boolean;
 }
 
@@ -27,6 +29,8 @@ export interface Draft {
   targetFolder: string;
   targetFilename: string;
   frontmatterOverrides?: Partial<Record<FrontmatterKey, boolean>>;
+  selectedTags?: string[];
+  tempTags?: string[];
   lastVideoProgress?: {
     currentTime: number;
     url: string;
