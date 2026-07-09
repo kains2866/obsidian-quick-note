@@ -26,6 +26,7 @@ const FORM_HTML = `
     <input type="checkbox" id="include-selected-text" />
     <input type="checkbox" id="preserve-images-in-selection" checked />
     <input type="checkbox" id="capture-video-progress" checked />
+    <input type="checkbox" id="auto-select-first-tag" />
     <select id="date-format">
       <option value="date">YYYY-MM-DD</option>
       <option value="datetime">YYYY-MM-DD HH:mm:ss</option>
@@ -196,6 +197,13 @@ describe('options page', () => {
 
       expect(settings.captureVideoProgress).toBe(false);
     });
+
+    it('maps autoSelectFirstTag checkbox to boolean', async () => {
+      const { readSettings } = await loadOptions();
+      (document.getElementById('auto-select-first-tag') as HTMLInputElement).checked = false;
+      const settings = readSettings();
+      expect(settings.autoSelectFirstTag).toBe(false);
+    });
   });
 
   describe('loadSettings flow', () => {
@@ -248,6 +256,9 @@ describe('options page', () => {
       expect(
         (document.getElementById('default-tags') as HTMLInputElement).value,
       ).toBe(DEFAULT_SETTINGS.defaultTags.join(', '));
+      expect(
+        (document.getElementById('auto-select-first-tag') as HTMLInputElement).checked,
+      ).toBe(DEFAULT_SETTINGS.autoSelectFirstTag);
     });
   });
 

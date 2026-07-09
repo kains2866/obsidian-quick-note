@@ -69,9 +69,30 @@
       </fieldset>
 
       <label>
-        <span data-i18n="defaultTagsLabel">默认标签（逗号分隔）</span>
+        <span data-i18n="globalTagPoolLabel">常用标签池（逗号分隔）</span>
         <input type="text" id="default-tags" data-i18n-placeholder="defaultTagsPlaceholder" placeholder="quick-note" />
+        <small data-i18n="globalTagPoolHint">作为 popup 标签栏的可选来源</small>
       </label>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="auto-select-first-tag" />
+        <span data-i18n="autoSelectFirstTagLabel">默认选中第一个标签</span>
+      </label>
+
+      <section class="domain-tag-rules">
+        <h2 data-i18n="domainTagRulesTitle">网站自动标签（即将上线）</h2>
+        <p data-i18n="domainTagRulesHint">后续版本将支持根据访问网站自动添加标签，当前请先使用 popup 标签栏手动选择。</p>
+        <div class="domain-rule-form disabled">
+          <label>
+            <span data-i18n="domainTagRulesDomainLabel">域名</span>
+            <input type="text" value="bilibili.com" disabled />
+          </label>
+          <label>
+            <span data-i18n="domainTagRulesTagsLabel">自动添加标签</span>
+            <input type="text" value="bilibili, 视频笔记" disabled />
+          </label>
+        </div>
+      </section>
 
       <div class="shortcut-row">
         <span id="current-shortcut" data-i18n="shortcutLoading">当前快捷键：读取中…</span>
