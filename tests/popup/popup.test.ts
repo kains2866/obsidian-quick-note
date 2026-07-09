@@ -598,6 +598,42 @@ describe('popup', () => {
   });
 
   describe('handleSave', () => {
+    it('saves only selected tags to frontmatter', async () => {
+      const sendMessage = vi.fn((message: { type: string }) => {
+        if (message.type === 'OPEN_OBSIDIAN_URL') return Promise.resolve({ ok: true });
+        return Promise.resolve({ ok: true });
+      });
+      const tabsSendMessage = vi.fn((_tabId: number, message: { type: string }) => {
+        if (message.type === 'GET_PAGE_INFO') return Promise.resolve(page);
+        if (message.type === 'COPY_TO_CLIPBOARD') return Promise.resolve({ success: false });
+        return Promise.resolve({});
+      });
+      const storedDraft: Draft = {
+        ...DEFAULT_DRAFT,
+        selectedTags: ['idea'],
+      };
+      const { init, handleSave } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, defaultTags: ['quick-note', 'idea'] },
+        storedDraft,
+        sendMessage,
+        tabsSendMessage,
+      });
+      await init();
+
+      const editor = document.getElementById('editor') as HTMLTextAreaElement;
+      editor.value = 'my note';
+      await handleSave();
+
+      const openCall = sendMessage.mock.calls.find(
+        (call) => (call[0] as { type: string }).type === 'OPEN_OBSIDIAN_URL',
+      );
+      expect(openCall).toBeDefined();
+      const url = (openCall![0] as unknown as { url: string }).url;
+      const contentParam = decodeURIComponent(url.split('content=')[1].split('&')[0]);
+      expect(contentParam).toContain('tags:\n  - idea');
+      expect(contentParam).not.toContain('quick-note');
+    });
+
     it('shows an error when vault name is not configured', async () => {
       const { init, handleSave } = await loadPopup({
         storedSettings: DEFAULT_SETTINGS,

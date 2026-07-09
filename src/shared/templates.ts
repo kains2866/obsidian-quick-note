@@ -112,6 +112,7 @@ export function buildFrontmatter(
   settings: ExtensionSettings,
   date = new Date(),
   overrides?: Partial<Record<FrontmatterKey, boolean>>,
+  draft?: Draft,
 ): string {
   const includeTitle = overrides?.title ?? settings.includeFrontmatterTitle;
   const includeDate = overrides?.date ?? settings.includeFrontmatterDate;
@@ -120,6 +121,7 @@ export function buildFrontmatter(
   const includeDescription = overrides?.description ?? settings.includeFrontmatterDescription;
   const includeSite = overrides?.site ?? settings.includeFrontmatterSite;
   const includeTags = overrides?.tags ?? settings.includeFrontmatterTags;
+  const tags = draft?.selectedTags ?? settings.defaultTags;
 
   const fields: string[] = [];
   if (includeTitle && page.title) {
@@ -141,8 +143,8 @@ export function buildFrontmatter(
   if (includeSite && page.site) {
     fields.push(`site: "${escapeYamlValue(page.site)}"`);
   }
-  if (includeTags && settings.defaultTags.length > 0) {
-    fields.push('tags:\n' + settings.defaultTags.map((t) => `  - ${t}`).join('\n'));
+  if (includeTags && tags.length > 0) {
+    fields.push('tags:\n' + tags.map((t) => `  - ${t}`).join('\n'));
   }
   if (fields.length === 0) return '';
   return '---\n' + fields.join('\n') + '\n---\n\n';
@@ -155,7 +157,7 @@ export function buildNoteContent(
   settings: ExtensionSettings,
   date = new Date(),
 ): string {
-  const frontmatter = buildFrontmatter(page, settings, date, draft.frontmatterOverrides);
+  const frontmatter = buildFrontmatter(page, settings, date, draft.frontmatterOverrides, draft);
   return frontmatter + userContent;
 }
 
