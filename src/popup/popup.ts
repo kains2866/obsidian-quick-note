@@ -241,20 +241,28 @@ function initializeSelectedTags(): void {
 }
 
 export function renderTagBar(): void {
-  if (!settings.includeFrontmatterTags) {
+  const config = getFrontmatterConfig();
+  if (!config.tags) {
     tagBar.style.display = 'none';
     return;
   }
   tagBar.style.display = 'flex';
 
   initializeSelectedTags();
-  const tags = getAllAvailableTags();
+  const globalTags = settings.defaultTags;
+  const tempTags = draft.tempTags ?? [];
+  const allTags = [...new Set([...globalTags, ...tempTags])];
   const selected = new Set(draft.selectedTags ?? []);
+  const tempTagSet = new Set(tempTags);
 
   tagList.innerHTML = '';
-  tags.forEach((tag) => {
+  allTags.forEach((tag) => {
+    if (!tag) return;
     const pill = document.createElement('span');
-    pill.className = `tag-pill ${selected.has(tag) ? 'selected' : ''}`;
+    const classes = ['tag-pill'];
+    if (selected.has(tag)) classes.push('selected');
+    if (tempTagSet.has(tag)) classes.push('temp');
+    pill.className = classes.join(' ');
     pill.textContent = tag;
     pill.addEventListener('click', () => toggleTag(tag));
     tagList.appendChild(pill);

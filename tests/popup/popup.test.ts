@@ -595,6 +595,34 @@ describe('popup', () => {
       expect(addBtn.querySelector('input')).toBe(input);
       expect((addBtn.querySelector('input') as HTMLInputElement).value).toBe('typed text');
     });
+
+    it('hides tag bar when frontmatter tags checkbox is unchecked', async () => {
+      const { init } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, defaultTags: ['quick-note'] },
+      });
+      await init();
+
+      expect(document.getElementById('tag-bar')?.style.display).not.toBe('none');
+
+      const fmTags = document.getElementById('fm-tags') as HTMLInputElement;
+      fmTags.checked = false;
+      fmTags.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(document.getElementById('tag-bar')?.style.display).toBe('none');
+    });
+
+    it('renders temporary tags with a distinct temp class', async () => {
+      const { init } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, defaultTags: ['quick-note'], autoSelectFirstTag: false },
+        storedDraft: { ...DEFAULT_DRAFT, tempTags: ['temp-tag'], selectedTags: ['temp-tag'] },
+      });
+      await init();
+
+      const tempPill = document.querySelector('.tag-pill.temp') as HTMLSpanElement;
+      expect(tempPill).not.toBeNull();
+      expect(tempPill.textContent).toBe('temp-tag');
+      expect(tempPill.classList.contains('selected')).toBe(true);
+    });
   });
 
   describe('handleSave', () => {
