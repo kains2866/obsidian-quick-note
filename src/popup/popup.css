@@ -149,37 +149,45 @@ body {
 
 .tag-bar {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 0;
   border-top: 1px solid var(--border-color, var(--border, #e5e5e5));
 }
 
 .tag-bar-label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted-color, var(--ink-muted, #888));
   flex-shrink: 0;
+  line-height: 20px;
+  padding-top: 2px;
 }
 
 .tag-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
   flex: 1;
 }
 
 .tag-pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  line-height: 16px;
   border: 1px solid var(--border-color, var(--border-strong, #d0d0d0));
   background: var(--bg-color, var(--surface, #fff));
   color: var(--text-color, var(--ink, #333));
   cursor: pointer;
   user-select: none;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.tag-pill:hover {
+  border-color: var(--primary-color, var(--accent, #65b687));
 }
 
 .tag-pill.selected {
@@ -188,18 +196,41 @@ body {
   color: #fff;
 }
 
+.tag-pill.selected:hover {
+  background: var(--primary-color-hover, var(--accent-hover, #4d946c));
+  border-color: var(--primary-color-hover, var(--accent-hover, #4d946c));
+}
+
+.tag-pill.temp {
+  border-style: dashed;
+  background: var(--accent-soft, #e8f5ed);
+  color: var(--primary-color, var(--accent, #65b687));
+}
+
+.tag-pill.temp.selected {
+  background: var(--primary-color, var(--accent, #65b687));
+  color: #fff;
+}
+
 .tag-pill.add-tag {
   border-style: dashed;
   color: var(--muted-color, var(--ink-muted, #888));
+  padding: 2px 7px;
+}
+
+.tag-pill.add-tag:hover {
+  border-color: var(--primary-color, var(--accent, #65b687));
+  color: var(--primary-color, var(--accent, #65b687));
 }
 
 .tag-pill input {
-  width: 80px;
+  width: 70px;
   border: none;
   background: transparent;
   outline: none;
-  font-size: 12px;
+  font-size: 11px;
   padding: 0;
+  color: inherit;
 }
 
 .frontmatter-section {
