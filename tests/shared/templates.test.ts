@@ -183,6 +183,29 @@ describe('templates', () => {
     expect(content).toBe('my note');
   });
 
+  it('builds note content using draft.selectedTags', () => {
+    const settings: ExtensionSettings = { ...DEFAULT_SETTINGS, defaultTags: ['quick-note', 'idea'] };
+    const draftWithTags: Draft = { ...draft, selectedTags: ['idea'] };
+    const content = buildNoteContent('my note', page, draftWithTags, settings, fixedDate);
+    expect(content).toContain('tags:\n  - idea');
+    expect(content).not.toContain('quick-note');
+  });
+
+  it('falls back to defaultTags when draft.selectedTags is undefined', () => {
+    const settings: ExtensionSettings = { ...DEFAULT_SETTINGS, defaultTags: ['quick-note', 'idea'] };
+    const draftWithoutTags: Draft = { ...draft, selectedTags: undefined };
+    const content = buildNoteContent('my note', page, draftWithoutTags, settings, fixedDate);
+    expect(content).toContain('tags:\n  - quick-note\n  - idea');
+  });
+
+  it('renders empty tags when draft.selectedTags is an empty array', () => {
+    const settings: ExtensionSettings = { ...DEFAULT_SETTINGS, defaultTags: ['quick-note'] };
+    const draftWithEmptyTags: Draft = { ...draft, selectedTags: [] };
+    const content = buildNoteContent('my note', page, draftWithEmptyTags, settings, fixedDate);
+    expect(content).not.toContain('tags:');
+    expect(content).not.toContain('quick-note');
+  });
+
   it('formats frontmatter date as unquoted date-only by default', () => {
     const result = formatFrontmatterDate(fixedDate, 'date');
     expect(result).toEqual({ value: '2026-07-01', quoted: false });

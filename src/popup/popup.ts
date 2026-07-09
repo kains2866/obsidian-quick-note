@@ -202,7 +202,7 @@ export function getFrontmatterConfig(): Record<FrontmatterKey, boolean> {
   };
 }
 
-export function getFrontmatterValue(key: FrontmatterKey, date = new Date()): string {
+export function getFrontmatterValue(key: FrontmatterKey, date = new Date(), draft?: Draft): string {
   switch (key) {
     case 'title':
       return pageInfo.title || '';
@@ -217,7 +217,7 @@ export function getFrontmatterValue(key: FrontmatterKey, date = new Date()): str
     case 'site':
       return pageInfo.site || '';
     case 'tags':
-      return settings.defaultTags.join(', ');
+      return draft?.selectedTags?.join(', ') ?? settings.defaultTags.join(', ');
     default:
       return '';
   }
@@ -340,9 +340,10 @@ export function renderFrontmatter(): void {
   const enabledKeys = FM_IDS.filter((key) => config[key]);
   frontmatterSummary.textContent = enabledKeys.length > 0 ? enabledKeys.join(', ') : t('none');
 
+  const date = new Date();
   FM_IDS.forEach((key) => {
     fmCheckboxes[key].checked = config[key];
-    const value = getFrontmatterValue(key);
+    const value = getFrontmatterValue(key, date, draft);
     fmValues[key].textContent = value || '—';
   });
 }
