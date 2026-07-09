@@ -530,6 +530,73 @@ describe('popup', () => {
     });
   });
 
+  describe('tag bar', () => {
+    it('toggles tag selection when clicking a pill', async () => {
+      const { init, getCurrentDraft } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, defaultTags: ['quick-note'], autoSelectFirstTag: false },
+      });
+      await init();
+
+      const pill = document.querySelector('.tag-pill:not(.add-tag)') as HTMLSpanElement;
+      pill.click();
+      expect(getCurrentDraft().selectedTags).toEqual(['quick-note']);
+
+      const pillAfter = document.querySelector('.tag-pill:not(.add-tag)') as HTMLSpanElement;
+      pillAfter.click();
+      expect(getCurrentDraft().selectedTags).toEqual([]);
+    });
+
+    it('adds a temp tag and selects it on Enter', async () => {
+      const { init, getCurrentDraft } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, defaultTags: ['quick-note'], autoSelectFirstTag: false },
+      });
+      await init();
+
+      const addBtn = document.querySelector('.tag-pill.add-tag') as HTMLSpanElement;
+      addBtn.click();
+      const input = addBtn.querySelector('input') as HTMLInputElement;
+      input.value = 'new idea';
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      expect(getCurrentDraft().tempTags).toEqual(['new-idea']);
+      expect(getCurrentDraft().selectedTags).toEqual(['new-idea']);
+      expect(document.querySelector('.tag-pill.add-tag input')).toBeNull();
+    });
+
+    it('does not add a temp tag on Escape', async () => {
+      const { init, getCurrentDraft } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, defaultTags: ['quick-note'], autoSelectFirstTag: false },
+      });
+      await init();
+
+      const addBtn = document.querySelector('.tag-pill.add-tag') as HTMLSpanElement;
+      addBtn.click();
+      const input = addBtn.querySelector('input') as HTMLInputElement;
+      input.value = 'new idea';
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+      expect(getCurrentDraft().tempTags ?? []).toEqual([]);
+      expect(getCurrentDraft().selectedTags).toEqual([]);
+      expect(document.querySelector('.tag-pill.add-tag input')).toBeNull();
+    });
+
+    it('keeps typed text when clicking inside the temp-tag input', async () => {
+      const { init } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, defaultTags: ['quick-note'], autoSelectFirstTag: false },
+      });
+      await init();
+
+      const addBtn = document.querySelector('.tag-pill.add-tag') as HTMLSpanElement;
+      addBtn.click();
+      const input = addBtn.querySelector('input') as HTMLInputElement;
+      input.value = 'typed text';
+      input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+      expect(addBtn.querySelector('input')).toBe(input);
+      expect((addBtn.querySelector('input') as HTMLInputElement).value).toBe('typed text');
+    });
+  });
+
   describe('handleSave', () => {
     it('shows an error when vault name is not configured', async () => {
       const { init, handleSave } = await loadPopup({

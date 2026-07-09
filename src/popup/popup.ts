@@ -291,7 +291,12 @@ function startAddingTag(): void {
   addBtn.appendChild(input);
   input.focus();
 
+  let isCommitted = false;
+  let isCancelled = false;
+
   const commit = () => {
+    if (isCommitted || isCancelled) return;
+    isCommitted = true;
     const raw = input.value.trim();
     if (raw) {
       const tag = raw.replace(/\s+/g, '-');
@@ -303,11 +308,31 @@ function startAddingTag(): void {
     renderTagBar();
   };
 
+  const cancel = () => {
+    if (isCommitted || isCancelled) return;
+    isCancelled = true;
+    input.blur();
+    renderTagBar();
+  };
+
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') commit();
-    if (e.key === 'Escape') renderTagBar();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commit();
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      cancel();
+    }
   });
-  input.addEventListener('blur', commit);
+  input.addEventListener('blur', () => {
+    if (!isCancelled) {
+      commit();
+    }
+  });
+  input.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
 }
 
 export function renderFrontmatter(): void {
