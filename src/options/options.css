@@ -222,6 +222,52 @@ button[type="submit"]:active {
   transform: translateY(1px);
 }
 
+.domain-tag-rules {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+.domain-tag-rules h2 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+}
+
+.domain-tag-rules p {
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin: 0 0 0.75rem;
+}
+
+.domain-rule-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.domain-rule-form.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.domain-rule-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.domain-rule-form input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+}
+
 .shortcut-row {
   display: flex;
   align-items: center;
