@@ -22,6 +22,15 @@ const addDomainRuleBtn = document.getElementById('add-domain-rule') as HTMLButto
 
 let domainTagRules: Array<{ domain: string; tags: string[] }> = [];
 let editingRuleIndex: number | null = null;
+let isDirty = false;
+
+function markDirty(): void {
+  isDirty = true;
+}
+
+function clearDirty(): void {
+  isDirty = false;
+}
 
 function escapeHtml(text: string): string {
   const div = document.createElement('div');
@@ -129,6 +138,7 @@ function saveDomainRule(index: number): void {
   domainTagRules = domainTagRules.map((rule, i) => (i === index ? { domain, tags } : rule));
   editingRuleIndex = null;
   renderDomainRules();
+  markDirty();
 }
 
 function addDomainRule(): void {
@@ -145,12 +155,14 @@ function addDomainRule(): void {
   domainRuleDomain.value = '';
   domainRuleTags.value = '';
   renderDomainRules();
+  markDirty();
 }
 
 function removeDomainRule(index: number): void {
   domainTagRules = domainTagRules.filter((_, i) => i !== index);
   if (editingRuleIndex === index) editingRuleIndex = null;
   renderDomainRules();
+  markDirty();
 }
 
 function initFooterMetadata(): void {
@@ -192,6 +204,7 @@ export async function loadSettings(): Promise<void> {
     tags: [...rule.tags],
   }));
   renderDomainRules();
+  clearDirty();
 }
 
 export async function loadCurrentShortcut(): Promise<void> {
@@ -303,11 +316,22 @@ addDomainRuleBtn?.addEventListener('click', addDomainRule);
 document.getElementById('settings-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   await setSettings(readSettings());
+  clearDirty();
   alert(t('settingsSaved'));
 });
 
 ['vault-name', 'base-folder', 'date-template'].forEach((id) => {
   document.getElementById(id)?.addEventListener('input', updateSavePathPreview);
+});
+
+const settingsForm = document.getElementById('settings-form');
+settingsForm?.addEventListener('input', markDirty);
+settingsForm?.addEventListener('change', markDirty);
+
+window.addEventListener('beforeunload', (event) => {
+  if (!isDirty) return;
+  event.preventDefault();
+  event.returnValue = t('unsavedChangesWarning');
 });
 
 localizePage();
