@@ -229,28 +229,51 @@ export function getFrontmatterValue(key: FrontmatterKey, date = new Date(), draf
   }
 }
 
+function parseRuleDomain(ruleDomain: string): { host: string; path: string } | null {
+  let value = ruleDomain.trim().toLowerCase();
+  if (!value) return null;
+
+  if (value.includes('://')) {
+    try {
+      const parsed = new URL(value);
+      value = parsed.hostname + parsed.pathname;
+    } catch {
+      // Fall through and use the raw value.
+    }
+  }
+
+  const [host, ...pathParts] = value.split('/');
+  const path = pathParts.length > 0 ? '/' + pathParts.join('/') : '';
+  return { host, path };
+}
+
+function ruleMatchesUrl(ruleDomain: string, url: string): boolean {
+  let pageHost = '';
+  let pagePath = '';
+  try {
+    const parsed = new URL(url);
+    pageHost = parsed.hostname.toLowerCase();
+    pagePath = parsed.pathname.toLowerCase();
+  } catch {
+    return false;
+  }
+
+  const parsedRule = parseRuleDomain(ruleDomain);
+  if (!parsedRule) return false;
+
+  const hostMatches = pageHost.includes(parsedRule.host);
+  if (!hostMatches) return false;
+  if (!parsedRule.path) return true;
+  return pagePath.startsWith(parsedRule.path);
+}
+
 function getMatchingDomainTags(): string[] {
   if (!pageInfo.url || settings.domainTagRules.length === 0) return [];
-
-  let hostname = '';
-  try {
-    hostname = new URL(pageInfo.url).hostname.toLowerCase();
-  } catch {
-    return [];
-  }
 
   const tags: string[] = [];
   settings.domainTagRules.forEach((rule) => {
     if (!rule.domain) return;
-    let ruleDomain = rule.domain.trim().toLowerCase();
-    if (ruleDomain.includes('://')) {
-      try {
-        ruleDomain = new URL(ruleDomain).hostname.toLowerCase();
-      } catch {
-        // Fall through and use the raw value.
-      }
-    }
-    if (hostname.includes(ruleDomain)) {
+    if (ruleMatchesUrl(rule.domain, pageInfo.url)) {
       tags.push(...rule.tags);
     }
   });
@@ -265,13 +288,17 @@ function getAllAvailableTags(): string[] {
 }
 
 function initializeSelectedTags(): void {
-  if (draft.selectedTags !== undefined) return;
+  const selected = new Set(draft.selectedTags ?? []);
 
-  const selected = new Set(getMatchingDomainTags());
-  if (settings.autoSelectFirstTag) {
+  // Domain rules are always enforced so tag changes take effect on the next popup open.
+  getMatchingDomainTags().forEach((tag) => selected.add(tag));
+
+  // The first global tag is only used as an initial default when no prior selection exists.
+  if (draft.selectedTags === undefined && settings.autoSelectFirstTag) {
     const firstTag = settings.defaultTags[0];
     if (firstTag) selected.add(firstTag);
   }
+
   draft = { ...draft, selectedTags: Array.from(selected) };
 }
 

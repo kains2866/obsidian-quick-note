@@ -682,6 +682,51 @@ describe('popup', () => {
 
       expect(getCurrentDraft().selectedTags).toEqual(['网易新闻']);
     });
+
+    it('matches rules that only specify the root domain', async () => {
+      const { init, getCurrentDraft } = await loadPopup({
+        storedSettings: {
+          ...SETTINGS_WITH_VAULT,
+          defaultTags: ['quick-note'],
+          autoSelectFirstTag: false,
+          domainTagRules: [{ domain: '163.com', tags: ['网易新闻'] }],
+        },
+        pageInfo: { ...page, url: 'https://news.163.com/article/1' },
+      });
+      await init();
+
+      expect(getCurrentDraft().selectedTags).toEqual(['网易新闻']);
+    });
+
+    it('supports path-based rules like 163.com/news', async () => {
+      const { init, getCurrentDraft } = await loadPopup({
+        storedSettings: {
+          ...SETTINGS_WITH_VAULT,
+          defaultTags: ['quick-note'],
+          autoSelectFirstTag: false,
+          domainTagRules: [{ domain: '163.com/news', tags: ['网易新闻'] }],
+        },
+        pageInfo: { ...page, url: 'https://163.com/news/article/1' },
+      });
+      await init();
+
+      expect(getCurrentDraft().selectedTags).toEqual(['网易新闻']);
+    });
+
+    it('does not match path-based rules when the path differs', async () => {
+      const { init, getCurrentDraft } = await loadPopup({
+        storedSettings: {
+          ...SETTINGS_WITH_VAULT,
+          defaultTags: ['quick-note'],
+          autoSelectFirstTag: false,
+          domainTagRules: [{ domain: '163.com/news', tags: ['网易新闻'] }],
+        },
+        pageInfo: { ...page, url: 'https://163.com/sports/article/1' },
+      });
+      await init();
+
+      expect(getCurrentDraft().selectedTags).toEqual([]);
+    });
   });
 
   describe('handleSave', () => {
