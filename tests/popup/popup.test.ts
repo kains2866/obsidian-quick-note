@@ -667,6 +667,21 @@ describe('popup', () => {
 
       expect(getCurrentDraft().selectedTags).toEqual(['bilibili', 'quick-note']);
     });
+
+    it('matches domain rules written as full URLs', async () => {
+      const { init, getCurrentDraft } = await loadPopup({
+        storedSettings: {
+          ...SETTINGS_WITH_VAULT,
+          defaultTags: ['quick-note'],
+          autoSelectFirstTag: false,
+          domainTagRules: [{ domain: 'https://news.163.com', tags: ['网易新闻'] }],
+        },
+        pageInfo: { ...page, url: 'https://news.163.com/article/1' },
+      });
+      await init();
+
+      expect(getCurrentDraft().selectedTags).toEqual(['网易新闻']);
+    });
   });
 
   describe('handleSave', () => {

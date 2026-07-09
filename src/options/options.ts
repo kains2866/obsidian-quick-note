@@ -32,6 +32,18 @@ function parseTagsInput(value: string): string[] {
   return value.split(',').map((t) => t.trim()).filter(Boolean);
 }
 
+function normalizeDomain(value: string): string {
+  let domain = value.trim();
+  if (domain.includes('://')) {
+    try {
+      domain = new URL(domain).hostname;
+    } catch {
+      // Keep the raw value if it's not a valid URL.
+    }
+  }
+  return domain.toLowerCase();
+}
+
 function renderDomainRules(): void {
   if (!domainRulesList) return;
   domainRulesList.innerHTML = '';
@@ -51,7 +63,7 @@ function renderDomainRules(): void {
 
 function addDomainRule(): void {
   if (!domainRuleDomain || !domainRuleTags) return;
-  const domain = domainRuleDomain.value.trim();
+  const domain = normalizeDomain(domainRuleDomain.value);
   const tags = parseTagsInput(domainRuleTags.value);
   if (!domain || tags.length === 0) return;
   domainTagRules = [...domainTagRules, { domain, tags }];

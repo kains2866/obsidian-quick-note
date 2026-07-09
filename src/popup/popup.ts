@@ -242,7 +242,15 @@ function getMatchingDomainTags(): string[] {
   const tags: string[] = [];
   settings.domainTagRules.forEach((rule) => {
     if (!rule.domain) return;
-    if (hostname.includes(rule.domain.toLowerCase())) {
+    let ruleDomain = rule.domain.trim().toLowerCase();
+    if (ruleDomain.includes('://')) {
+      try {
+        ruleDomain = new URL(ruleDomain).hostname.toLowerCase();
+      } catch {
+        // Fall through and use the raw value.
+      }
+    }
+    if (hostname.includes(ruleDomain)) {
       tags.push(...rule.tags);
     }
   });

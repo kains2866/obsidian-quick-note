@@ -310,6 +310,28 @@ describe('options page', () => {
       expect(settings.domainTagRules).toEqual([{ domain: 'github.com', tags: ['github', 'dev'] }]);
     });
 
+    it('normalizes a full URL domain to just the hostname', async () => {
+      await loadOptions();
+      const domainInput = document.getElementById('domain-rule-domain') as HTMLInputElement;
+      const tagsInput = document.getElementById('domain-rule-tags') as HTMLInputElement;
+      const addBtn = document.getElementById('add-domain-rule') as HTMLButtonElement;
+
+      domainInput.value = 'https://news.163.com/path';
+      tagsInput.value = '网易新闻';
+      addBtn.click();
+
+      await vi.waitFor(() => {
+        expect(document.querySelectorAll('.domain-rule-item').length).toBe(1);
+      });
+
+      const displayedDomain = document.querySelector('.domain-rule-domain')?.textContent;
+      expect(displayedDomain).toBe('news.163.com');
+
+      const { readSettings } = await import('../../src/options/options.js');
+      const settings = readSettings();
+      expect(settings.domainTagRules).toEqual([{ domain: 'news.163.com', tags: ['网易新闻'] }]);
+    });
+
     it('removes a rule when clicking delete', async () => {
       const storedSettings: ExtensionSettings = {
         ...DEFAULT_SETTINGS,
