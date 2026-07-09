@@ -136,17 +136,12 @@ body {
   gap: 5px;
   flex: 1;
   overflow-x: auto;
-  scrollbar-width: thin;
-  padding-bottom: 2px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .tag-list::-webkit-scrollbar {
-  height: 4px;
-}
-
-.tag-list::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 2px;
+  display: none;
 }
 
 .tag-pill {
