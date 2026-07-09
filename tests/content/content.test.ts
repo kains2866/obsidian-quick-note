@@ -63,6 +63,73 @@ describe('content helpers', () => {
       document.body.removeChild(p);
     });
 
+    it('falls back to cached selection when live selection has been cleared', async () => {
+      const { getPageInfo } = await loadContent();
+      const p = document.createElement('p');
+      p.textContent = 'cached highlighted text';
+      document.body.appendChild(p);
+
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+
+      // Simulate Chrome clearing the selection after opening the popup from the
+      // context menu.
+      selection?.removeAllRanges();
+
+      const info = getPageInfo();
+      expect(info.selectedText).toBe('cached highlighted text');
+
+      document.body.removeChild(p);
+    });
+
+    it('clears cached selection after a left-click clears the selection', async () => {
+      const { getPageInfo } = await loadContent();
+      const p = document.createElement('p');
+      p.textContent = 'will be cleared';
+      document.body.appendChild(p);
+
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+
+      selection?.removeAllRanges();
+      document.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+
+      const info = getPageInfo();
+      expect(info.selectedText).toBe('');
+
+      document.body.removeChild(p);
+    });
+
+    it('keeps cached selection after a right-click clears the selection', async () => {
+      const { getPageInfo } = await loadContent();
+      const p = document.createElement('p');
+      p.textContent = 'kept after right click';
+      document.body.appendChild(p);
+
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+
+      selection?.removeAllRanges();
+      document.dispatchEvent(new MouseEvent('mousedown', { button: 2, bubbles: true }));
+
+      const info = getPageInfo();
+      expect(info.selectedText).toBe('kept after right click');
+
+      document.body.removeChild(p);
+    });
+
     it('extracts author, description, and site from meta tags', async () => {
       const { getPageInfo } = await loadContent();
       const head = document.head;

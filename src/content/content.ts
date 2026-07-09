@@ -635,6 +635,39 @@ export function extractSelectedContent(selection: Selection | null): string {
   return fragmentToMarkdown(fragment);
 }
 
+// Chrome clears the page selection when the user opens the extension popup via
+// the right-click context menu. We cache the last non-empty selection so the
+// popup can still import the highlighted text in that flow.
+let cachedSelectionText = '';
+let cachedSelectedContent = '';
+
+function updateCachedSelection(): void {
+  const selection = window.getSelection();
+  const text = selection?.toString() ?? '';
+  if (text) {
+    cachedSelectionText = text;
+    cachedSelectedContent = extractSelectedContent(selection);
+  }
+}
+
+function clearCachedSelectionIfEmpty(): void {
+  const selection = window.getSelection();
+  if (!selection || selection.toString() === '') {
+    cachedSelectionText = '';
+    cachedSelectedContent = '';
+  }
+}
+
+document.addEventListener('selectionchange', updateCachedSelection);
+
+// Left-clicking outside a selection intentionally clears it; right-clicking
+// (which opens the context menu) should keep the cached text available.
+document.addEventListener('mousedown', (event) => {
+  if (event.button === 0) {
+    clearCachedSelectionIfEmpty();
+  }
+});
+
 function cleanTitle(title: string, siteName: string): string {
   if (!title) return title;
 
@@ -712,12 +745,20 @@ function getBestTitle(): string {
 
 export function getPageInfo(): PageInfo {
   const selection = window.getSelection();
+  const currentText = selection?.toString() ?? '';
+
+  // Prefer the live selection; fall back to the cached selection when the
+  // browser has cleared it (e.g. after opening the popup from the context menu).
+  const selectedText = currentText || cachedSelectionText;
+  const selectedContent = currentText
+    ? extractSelectedContent(selection)
+    : cachedSelectedContent;
 
   return {
     url: window.location.href,
     title: getBestTitle(),
-    selectedText: selection?.toString() ?? '',
-    selectedContent: extractSelectedContent(selection),
+    selectedText,
+    selectedContent,
     author: extractAuthor(),
     description: extractDescription(),
     site: extractSite(),
