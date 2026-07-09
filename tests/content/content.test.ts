@@ -99,8 +99,31 @@ describe('content helpers', () => {
       selection?.addRange(range);
       document.dispatchEvent(new Event('selectionchange'));
 
+      // Simulate the user left-clicking elsewhere to clear the selection.
       selection?.removeAllRanges();
-      document.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+      document.dispatchEvent(new MouseEvent('click', { button: 0, bubbles: true }));
+
+      const info = getPageInfo();
+      expect(info.selectedText).toBe('');
+
+      document.body.removeChild(p);
+    });
+
+    it('clears cached selection after pressing Escape', async () => {
+      const { getPageInfo } = await loadContent();
+      const p = document.createElement('p');
+      p.textContent = 'cleared by escape';
+      document.body.appendChild(p);
+
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      document.dispatchEvent(new Event('selectionchange'));
+
+      selection?.removeAllRanges();
+      document.dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape', bubbles: true }));
 
       const info = getPageInfo();
       expect(info.selectedText).toBe('');
@@ -121,8 +144,9 @@ describe('content helpers', () => {
       selection?.addRange(range);
       document.dispatchEvent(new Event('selectionchange'));
 
+      // A real right-click does not dispatch a page click event, so the cache
+      // should survive.
       selection?.removeAllRanges();
-      document.dispatchEvent(new MouseEvent('mousedown', { button: 2, bubbles: true }));
 
       const info = getPageInfo();
       expect(info.selectedText).toBe('kept after right click');
