@@ -40,6 +40,10 @@ const FORM_HTML = `
     <input type="checkbox" id="fm-site" />
     <input type="checkbox" id="fm-tags" />
     <input type="text" id="default-tags" value="quick-note" />
+    <div id="domain-rules-list"></div>
+    <input type="text" id="domain-rule-domain" />
+    <input type="text" id="domain-rule-tags" />
+    <button type="button" id="add-domain-rule"></button>
     <div class="preview-box">
       <strong>保存位置预览</strong>
       <div id="save-path-preview">请先填写 Obsidian 仓库名</div>
@@ -204,6 +208,12 @@ describe('options page', () => {
       const settings = readSettings();
       expect(settings.autoSelectFirstTag).toBe(false);
     });
+
+    it('returns empty domain tag rules by default', async () => {
+      const { readSettings } = await loadOptions();
+      const settings = readSettings();
+      expect(settings.domainTagRules).toEqual([]);
+    });
   });
 
   describe('loadSettings flow', () => {
@@ -259,6 +269,66 @@ describe('options page', () => {
       expect(
         (document.getElementById('auto-select-first-tag') as HTMLInputElement).checked,
       ).toBe(DEFAULT_SETTINGS.autoSelectFirstTag);
+    });
+  });
+
+  describe('domain tag rules', () => {
+    it('loads stored rules into the list', async () => {
+      const storedSettings: ExtensionSettings = {
+        ...DEFAULT_SETTINGS,
+        domainTagRules: [
+          { domain: 'bilibili.com', tags: ['bilibili', '视频笔记'] },
+          { domain: 'youtube.com', tags: ['youtube'] },
+        ],
+      };
+      const { loadSettings } = await loadOptions({ storedSettings });
+      await loadSettings();
+
+      const items = document.querySelectorAll('.domain-rule-item');
+      expect(items.length).toBe(2);
+      expect(items[0].querySelector('.domain-rule-domain')?.textContent).toBe('bilibili.com');
+      expect(items[0].querySelector('.domain-rule-tags')?.textContent).toBe('bilibili, 视频笔记');
+      expect(items[1].querySelector('.domain-rule-domain')?.textContent).toBe('youtube.com');
+    });
+
+    it('adds a rule and includes it in readSettings', async () => {
+      await loadOptions();
+      const domainInput = document.getElementById('domain-rule-domain') as HTMLInputElement;
+      const tagsInput = document.getElementById('domain-rule-tags') as HTMLInputElement;
+      const addBtn = document.getElementById('add-domain-rule') as HTMLButtonElement;
+
+      domainInput.value = 'github.com';
+      tagsInput.value = 'github, dev';
+      addBtn.click();
+
+      await vi.waitFor(() => {
+        expect(document.querySelectorAll('.domain-rule-item').length).toBe(1);
+      });
+
+      const { readSettings } = await import('../../src/options/options.js');
+      const settings = readSettings();
+      expect(settings.domainTagRules).toEqual([{ domain: 'github.com', tags: ['github', 'dev'] }]);
+    });
+
+    it('removes a rule when clicking delete', async () => {
+      const storedSettings: ExtensionSettings = {
+        ...DEFAULT_SETTINGS,
+        domainTagRules: [{ domain: 'bilibili.com', tags: ['bilibili'] }],
+      };
+      await loadOptions({ storedSettings });
+      const { loadSettings } = await import('../../src/options/options.js');
+      await loadSettings();
+
+      const removeBtn = document.querySelector('.domain-rule-remove') as HTMLButtonElement;
+      removeBtn.click();
+
+      await vi.waitFor(() => {
+        expect(document.querySelectorAll('.domain-rule-item').length).toBe(0);
+      });
+
+      const { readSettings } = await import('../../src/options/options.js');
+      const settings = readSettings();
+      expect(settings.domainTagRules).toEqual([]);
     });
   });
 

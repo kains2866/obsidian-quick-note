@@ -229,21 +229,42 @@ export function getFrontmatterValue(key: FrontmatterKey, date = new Date(), draf
   }
 }
 
+function getMatchingDomainTags(): string[] {
+  if (!pageInfo.url || settings.domainTagRules.length === 0) return [];
+
+  let hostname = '';
+  try {
+    hostname = new URL(pageInfo.url).hostname.toLowerCase();
+  } catch {
+    return [];
+  }
+
+  const tags: string[] = [];
+  settings.domainTagRules.forEach((rule) => {
+    if (!rule.domain) return;
+    if (hostname.includes(rule.domain.toLowerCase())) {
+      tags.push(...rule.tags);
+    }
+  });
+  return [...new Set(tags)];
+}
+
 function getAllAvailableTags(): string[] {
   const globalTags = settings.defaultTags;
   const tempTags = draft.tempTags ?? [];
-  return [...new Set([...globalTags, ...tempTags])];
+  const domainTags = getMatchingDomainTags();
+  return [...new Set([...globalTags, ...tempTags, ...domainTags])];
 }
 
 function initializeSelectedTags(): void {
   if (draft.selectedTags !== undefined) return;
 
-  const selected: string[] = [];
+  const selected = new Set(getMatchingDomainTags());
   if (settings.autoSelectFirstTag) {
     const firstTag = settings.defaultTags[0];
-    if (firstTag) selected.push(firstTag);
+    if (firstTag) selected.add(firstTag);
   }
-  draft = { ...draft, selectedTags: selected };
+  draft = { ...draft, selectedTags: Array.from(selected) };
 }
 
 export function renderTagBar(): void {
@@ -255,11 +276,9 @@ export function renderTagBar(): void {
   tagBar.style.display = 'flex';
 
   initializeSelectedTags();
-  const globalTags = settings.defaultTags;
-  const tempTags = draft.tempTags ?? [];
-  const allTags = [...new Set([...globalTags, ...tempTags])];
+  const allTags = getAllAvailableTags();
   const selected = new Set(draft.selectedTags ?? []);
-  const tempTagSet = new Set(tempTags);
+  const tempTagSet = new Set(draft.tempTags ?? []);
 
   tagList.innerHTML = '';
   allTags.forEach((tag) => {

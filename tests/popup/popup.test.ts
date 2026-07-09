@@ -619,6 +619,54 @@ describe('popup', () => {
       expect(tempPill.textContent).toBe('temp-tag');
       expect(tempPill.classList.contains('selected')).toBe(true);
     });
+
+    it('auto-selects tags from matching domain rules', async () => {
+      const { init, getCurrentDraft } = await loadPopup({
+        storedSettings: {
+          ...SETTINGS_WITH_VAULT,
+          defaultTags: ['quick-note'],
+          autoSelectFirstTag: false,
+          domainTagRules: [{ domain: 'bilibili.com', tags: ['bilibili', '视频笔记'] }],
+        },
+        pageInfo: { ...page, url: 'https://www.bilibili.com/video/BV123' },
+      });
+      await init();
+
+      expect(getCurrentDraft().selectedTags).toEqual(['bilibili', '视频笔记']);
+      const pills = Array.from(document.querySelectorAll('.tag-pill:not(.add-tag)'));
+      expect(pills.map((p) => p.textContent)).toContain('bilibili');
+      expect(pills.map((p) => p.textContent)).toContain('视频笔记');
+    });
+
+    it('does not auto-select domain tags when URL does not match', async () => {
+      const { init, getCurrentDraft } = await loadPopup({
+        storedSettings: {
+          ...SETTINGS_WITH_VAULT,
+          defaultTags: ['quick-note'],
+          autoSelectFirstTag: false,
+          domainTagRules: [{ domain: 'bilibili.com', tags: ['bilibili'] }],
+        },
+        pageInfo: { ...page, url: 'https://example.com' },
+      });
+      await init();
+
+      expect(getCurrentDraft().selectedTags).toEqual([]);
+    });
+
+    it('combines domain tags with the first global tag when autoSelectFirstTag is on', async () => {
+      const { init, getCurrentDraft } = await loadPopup({
+        storedSettings: {
+          ...SETTINGS_WITH_VAULT,
+          defaultTags: ['quick-note', 'clip'],
+          autoSelectFirstTag: true,
+          domainTagRules: [{ domain: 'bilibili.com', tags: ['bilibili'] }],
+        },
+        pageInfo: { ...page, url: 'https://bilibili.com/video/1' },
+      });
+      await init();
+
+      expect(getCurrentDraft().selectedTags).toEqual(['bilibili', 'quick-note']);
+    });
   });
 
   describe('handleSave', () => {

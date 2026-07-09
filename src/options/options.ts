@@ -15,6 +15,56 @@ document.title = t('optionsTitle');
 
 const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
 
+const domainRulesList = document.getElementById('domain-rules-list') as HTMLDivElement | null;
+const domainRuleDomain = document.getElementById('domain-rule-domain') as HTMLInputElement | null;
+const domainRuleTags = document.getElementById('domain-rule-tags') as HTMLInputElement | null;
+const addDomainRuleBtn = document.getElementById('add-domain-rule') as HTMLButtonElement | null;
+
+let domainTagRules: Array<{ domain: string; tags: string[] }> = [];
+
+function escapeHtml(text: string): string {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function parseTagsInput(value: string): string[] {
+  return value.split(',').map((t) => t.trim()).filter(Boolean);
+}
+
+function renderDomainRules(): void {
+  if (!domainRulesList) return;
+  domainRulesList.innerHTML = '';
+  domainTagRules.forEach((rule, index) => {
+    const item = document.createElement('div');
+    item.className = 'domain-rule-item';
+    item.innerHTML = `
+      <span class="domain-rule-domain">${escapeHtml(rule.domain)}</span>
+      <span class="domain-rule-tags">${escapeHtml(rule.tags.join(', '))}</span>
+      <button type="button" class="domain-rule-remove" data-index="${index}" data-i18n="removeDomainRule">删除</button>
+    `;
+    item.querySelector('.domain-rule-remove')?.addEventListener('click', () => removeDomainRule(index));
+    domainRulesList.appendChild(item);
+  });
+  localizePage();
+}
+
+function addDomainRule(): void {
+  if (!domainRuleDomain || !domainRuleTags) return;
+  const domain = domainRuleDomain.value.trim();
+  const tags = parseTagsInput(domainRuleTags.value);
+  if (!domain || tags.length === 0) return;
+  domainTagRules = [...domainTagRules, { domain, tags }];
+  domainRuleDomain.value = '';
+  domainRuleTags.value = '';
+  renderDomainRules();
+}
+
+function removeDomainRule(index: number): void {
+  domainTagRules = domainTagRules.filter((_, i) => i !== index);
+  renderDomainRules();
+}
+
 function initFooterMetadata(): void {
   const authorEl = document.getElementById('footer-author-name');
   if (authorEl) authorEl.textContent = AUTHOR_NAME;
@@ -49,6 +99,11 @@ export async function loadSettings(): Promise<void> {
   $('fm-site').checked = settings.includeFrontmatterSite;
   $('fm-tags').checked = settings.includeFrontmatterTags;
   $('default-tags').value = settings.defaultTags.join(', ');
+  domainTagRules = settings.domainTagRules.map((rule) => ({
+    domain: rule.domain,
+    tags: [...rule.tags],
+  }));
+  renderDomainRules();
 }
 
 export async function loadCurrentShortcut(): Promise<void> {
@@ -91,7 +146,10 @@ export function readSettings(): ExtensionSettings {
     includeFrontmatterTags: $('fm-tags').checked,
     defaultTags: $('default-tags').value.split(',').map((t) => t.trim()).filter(Boolean),
     autoSelectFirstTag: $('auto-select-first-tag').checked,
-    domainTagRules: [],
+    domainTagRules: domainTagRules.map((rule) => ({
+      domain: rule.domain,
+      tags: [...rule.tags],
+    })),
   };
 }
 
@@ -149,6 +207,8 @@ export function updateSavePathPreview(): void {
 document.getElementById('open-shortcuts')?.addEventListener('click', () => {
   chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
 });
+
+addDomainRuleBtn?.addEventListener('click', addDomainRule);
 
 
 
