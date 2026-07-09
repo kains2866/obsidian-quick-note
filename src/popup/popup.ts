@@ -54,6 +54,8 @@ const targetEditCancel = document.getElementById('target-edit-cancel') as HTMLBu
 const charCountEl = document.getElementById('char-count') as HTMLSpanElement;
 const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
+const tagBar = document.getElementById('tag-bar') as HTMLDivElement;
+const tagList = document.getElementById('tag-list') as HTMLDivElement;
 
 const frontmatterHeader = document.getElementById('frontmatter-header') as HTMLDivElement;
 const frontmatterBody = document.getElementById('frontmatter-body') as HTMLDivElement;
@@ -150,6 +152,7 @@ export async function init(): Promise<void> {
   updateCharCount();
   autoResizeTextarea();
   renderFrontmatter();
+  renderTagBar();
   localizePage();
   localizePlaceholders();
 
@@ -181,6 +184,8 @@ export function getCurrentDraft(): Draft {
     targetFolder: draft.targetFolder,
     targetFilename: draft.targetFilename,
     frontmatterOverrides: draft.frontmatterOverrides,
+    selectedTags: draft.selectedTags,
+    tempTags: draft.tempTags,
     lastVideoProgress: draft.lastVideoProgress,
   };
 }
@@ -218,6 +223,93 @@ export function getFrontmatterValue(key: FrontmatterKey, date = new Date()): str
   }
 }
 
+function getAllAvailableTags(): string[] {
+  const globalTags = settings.defaultTags;
+  const tempTags = draft.tempTags ?? [];
+  return [...new Set([...globalTags, ...tempTags])];
+}
+
+function initializeSelectedTags(): void {
+  if (draft.selectedTags !== undefined) return;
+
+  const selected: string[] = [];
+  if (settings.autoSelectFirstTag) {
+    const firstTag = settings.defaultTags[0];
+    if (firstTag) selected.push(firstTag);
+  }
+  draft = { ...draft, selectedTags: selected };
+}
+
+export function renderTagBar(): void {
+  if (!settings.includeFrontmatterTags) {
+    tagBar.style.display = 'none';
+    return;
+  }
+  tagBar.style.display = 'flex';
+
+  initializeSelectedTags();
+  const tags = getAllAvailableTags();
+  const selected = new Set(draft.selectedTags ?? []);
+
+  tagList.innerHTML = '';
+  tags.forEach((tag) => {
+    const pill = document.createElement('span');
+    pill.className = `tag-pill ${selected.has(tag) ? 'selected' : ''}`;
+    pill.textContent = tag;
+    pill.addEventListener('click', () => toggleTag(tag));
+    tagList.appendChild(pill);
+  });
+
+  const addBtn = document.createElement('span');
+  addBtn.className = 'tag-pill add-tag';
+  addBtn.textContent = t('tagAddButton');
+  addBtn.addEventListener('click', startAddingTag);
+  tagList.appendChild(addBtn);
+}
+
+function toggleTag(tag: string): void {
+  const selected = new Set(draft.selectedTags ?? []);
+  if (selected.has(tag)) {
+    selected.delete(tag);
+  } else {
+    selected.add(tag);
+  }
+  draft = { ...draft, selectedTags: Array.from(selected) };
+  saveDraft();
+  renderTagBar();
+}
+
+function startAddingTag(): void {
+  const addBtn = tagList.querySelector('.add-tag') as HTMLSpanElement;
+  if (!addBtn) return;
+
+  addBtn.className = 'tag-pill add-tag';
+  addBtn.innerHTML = '';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = t('tagInputPlaceholder');
+  addBtn.appendChild(input);
+  input.focus();
+
+  const commit = () => {
+    const raw = input.value.trim();
+    if (raw) {
+      const tag = raw.replace(/\s+/g, '-');
+      const tempTags = [...new Set([...(draft.tempTags ?? []), tag])];
+      const selected = [...new Set([...(draft.selectedTags ?? []), tag])];
+      draft = { ...draft, tempTags, selectedTags: selected };
+      saveDraft();
+    }
+    renderTagBar();
+  };
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') commit();
+    if (e.key === 'Escape') renderTagBar();
+  });
+  input.addEventListener('blur', commit);
+}
+
 export function renderFrontmatter(): void {
   const config = getFrontmatterConfig();
   const enabledKeys = FM_IDS.filter((key) => config[key]);
@@ -244,6 +336,9 @@ function saveFrontmatterOverride(key: FrontmatterKey, value: boolean): void {
   }
   draft = { ...draft, frontmatterOverrides: currentOverrides };
   saveDraft();
+  if (key === 'tags') {
+    renderTagBar();
+  }
 }
 
 export function updateTargetPath(): void {

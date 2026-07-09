@@ -44,6 +44,10 @@ const POPUP_HTML = `
         <label><input type="checkbox" id="fm-tags" /> tags <span class="fm-value" id="fm-tags-value"></span></label>
       </div>
     </div>
+    <div class="tag-bar" id="tag-bar">
+      <span class="tag-bar-label">标签</span>
+      <div class="tag-list" id="tag-list"></div>
+    </div>
     <textarea id="editor" placeholder="输入 Markdown..."></textarea>
     <div class="footer">
       <span id="char-count">0 字符</span>
@@ -493,6 +497,36 @@ describe('popup', () => {
       const status = document.getElementById('status') as HTMLDivElement;
       expect(status.textContent).toBe(t('cannotGetCurrentTab'));
       expect(status.className).toBe('error');
+    });
+
+    it('renders tag bar when includeFrontmatterTags is enabled', async () => {
+      const { init } = await loadPopup({ storedSettings: SETTINGS_WITH_VAULT });
+      await init();
+      expect(document.getElementById('tag-bar')?.style.display).not.toBe('none');
+    });
+
+    it('hides tag bar when includeFrontmatterTags is disabled', async () => {
+      const { init } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, includeFrontmatterTags: false },
+      });
+      await init();
+      expect(document.getElementById('tag-bar')?.style.display).toBe('none');
+    });
+
+    it('auto-selects first tag when setting is enabled', async () => {
+      const { init, getCurrentDraft } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, defaultTags: ['quick-note', 'idea'], autoSelectFirstTag: true },
+      });
+      await init();
+      expect(getCurrentDraft().selectedTags).toEqual(['quick-note']);
+    });
+
+    it('does not auto-select tag when setting is disabled', async () => {
+      const { init, getCurrentDraft } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, defaultTags: ['quick-note'], autoSelectFirstTag: false },
+      });
+      await init();
+      expect(getCurrentDraft().selectedTags).toEqual([]);
     });
   });
 
