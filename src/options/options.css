@@ -306,6 +306,21 @@ button[type="submit"]:active {
   font-size: 13px;
 }
 
+.domain-rule-item input {
+  padding: 0.35rem 0.5rem;
+  font-size: 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--ink);
+  outline: none;
+}
+
+.domain-rule-item input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
 .domain-rule-domain {
   color: var(--ink);
   font-weight: 500;
@@ -315,7 +330,12 @@ button[type="submit"]:active {
   color: var(--ink-muted);
 }
 
-.domain-rule-remove {
+.domain-rule-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.domain-rule-actions button {
   padding: 0.25rem 0.5rem;
   font-size: 12px;
   border: 1px solid var(--border-strong);
@@ -323,10 +343,16 @@ button[type="submit"]:active {
   background: var(--surface);
   color: var(--ink);
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.domain-rule-remove:hover {
+.domain-rule-actions button:hover {
+  background: var(--bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.domain-rule-actions button.domain-rule-remove:hover {
   background: var(--error-soft, #fef2f2);
   border-color: var(--error);
   color: var(--error);
