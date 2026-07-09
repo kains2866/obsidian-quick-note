@@ -116,7 +116,7 @@ body {
 
 .tag-bar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
   padding: 6px 0;
   border-top: 1px solid var(--border-color, var(--border, #e5e5e5));
@@ -126,15 +126,26 @@ body {
   font-size: 11px;
   color: var(--muted-color, var(--ink-muted, #888));
   flex-shrink: 0;
-  line-height: 20px;
-  padding-top: 2px;
+  line-height: 16px;
 }
 
 .tag-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 5px;
   flex: 1;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
+}
+
+.tag-list::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tag-list::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 2px;
 }
 
 .tag-pill {

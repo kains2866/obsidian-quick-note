@@ -55,6 +55,14 @@ const statusEl = document.getElementById('status') as HTMLDivElement;
 const tagBar = document.getElementById('tag-bar') as HTMLDivElement;
 const tagList = document.getElementById('tag-list') as HTMLDivElement;
 
+// Scroll the tag list horizontally with a vertical mouse wheel so users don't
+// have to discover shift+scroll.
+tagList.addEventListener('wheel', (event) => {
+  if (event.deltaY === 0) return;
+  event.preventDefault();
+  tagList.scrollLeft += event.deltaY;
+}, { passive: false });
+
 const frontmatterHeader = document.getElementById('frontmatter-header') as HTMLDivElement;
 const frontmatterBody = document.getElementById('frontmatter-body') as HTMLDivElement;
 const frontmatterSummary = document.getElementById('frontmatter-summary') as HTMLSpanElement;
