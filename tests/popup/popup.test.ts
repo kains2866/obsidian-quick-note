@@ -45,7 +45,7 @@ const POPUP_HTML = `
       </div>
     </div>
     <div class="tag-bar" id="tag-bar">
-      <span class="tag-bar-label">标签</span>
+      <span class="tag-bar-label">tags</span>
       <div class="tag-list" id="tag-list"></div>
     </div>
     <textarea id="editor" placeholder="输入 Markdown..."></textarea>
