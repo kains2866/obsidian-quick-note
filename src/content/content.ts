@@ -660,10 +660,18 @@ function clearCachedSelectionIfEmpty(): void {
 
 document.addEventListener('selectionchange', updateCachedSelection);
 
-// Left-clicking outside a selection intentionally clears it; right-clicking
-// (which opens the context menu) should keep the cached text available.
-document.addEventListener('mousedown', (event) => {
-  if (event.button === 0) {
+// Left-clicking outside a selection intentionally clears it. We clear the cache
+// on click (after the browser has removed the selection) rather than on
+// mousedown, because the selection may still exist when mousedown fires.
+// Right-clicking the context-menu item does not dispatch a page click event, so
+// the context-menu flow keeps the cached text available.
+document.addEventListener('click', () => {
+  clearCachedSelectionIfEmpty();
+});
+
+// Keyboard-driven deselect (e.g. Escape) should also drop the cache.
+document.addEventListener('keyup', (event) => {
+  if (event.key === 'Escape') {
     clearCachedSelectionIfEmpty();
   }
 });
