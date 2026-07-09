@@ -131,6 +131,7 @@ body {
 
 .tag-list {
   display: flex;
+  align-items: center;
   flex-wrap: nowrap;
   gap: 5px;
   flex: 1;
@@ -151,11 +152,16 @@ body {
 .tag-pill {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 3px;
   padding: 2px 8px;
   border-radius: 10px;
   font-size: 11px;
   line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
   border: 1px solid var(--border-color, var(--border-strong, #d0d0d0));
   background: var(--bg-color, var(--surface, #fff));
   color: var(--text-color, var(--ink, #333));
