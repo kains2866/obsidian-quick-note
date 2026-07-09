@@ -11,14 +11,10 @@
     <div class="target-edit" id="target-edit">
       <label><span data-i18n="folderLabel">文件夹</span> <input type="text" id="target-folder-input" data-i18n-placeholder="folderPlaceholder" placeholder="覆盖文件夹" /></label>
       <label><span data-i18n="filenameLabel">文件名</span> <input type="text" id="target-filename-input" data-i18n-placeholder="filenamePlaceholder" placeholder="覆盖文件名" /></label>
-      <div class="target-edit-actions">
-        <button id="target-edit-save" type="button" data-i18n="save">保存</button>
-        <button id="target-edit-cancel" type="button" data-i18n="cancel">取消</button>
+      <div class="target-edit-toggles">
+        <label><input type="checkbox" id="toggle-url" /> <span data-i18n="urlToggle">URL</span></label>
+        <label><input type="checkbox" id="toggle-title" /> <span data-i18n="titleToggle">标题</span></label>
       </div>
-    </div>
-    <div class="toggles">
-      <label><input type="checkbox" id="toggle-url" /> <span data-i18n="urlToggle">URL</span></label>
-      <label><input type="checkbox" id="toggle-title" /> <span data-i18n="titleToggle">标题</span></label>
     </div>
     <div class="frontmatter-section" id="frontmatter-section">
       <div class="frontmatter-header" id="frontmatter-header">
