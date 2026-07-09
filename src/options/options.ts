@@ -21,6 +21,7 @@ const domainRuleTags = document.getElementById('domain-rule-tags') as HTMLInputE
 const addDomainRuleBtn = document.getElementById('add-domain-rule') as HTMLButtonElement | null;
 
 let domainTagRules: Array<{ domain: string; tags: string[] }> = [];
+let editingRuleIndex: number | null = null;
 
 function escapeHtml(text: string): string {
   const div = document.createElement('div');
@@ -44,26 +45,100 @@ function normalizeDomain(value: string): string {
   return domain.toLowerCase();
 }
 
+function isValidDomain(value: string): boolean {
+  const normalized = normalizeDomain(value);
+  if (!normalized) return false;
+
+  const [host, ...pathParts] = normalized.split('/');
+  const path = pathParts.join('/');
+
+  // Host part: letters, digits, hyphens, dots, and unicode letters; must look like a domain.
+  const hostValid = /^[a-z0-9\u4e00-\u9fa5]([a-z0-9\-\u4e00-\u9fa5]*\.?)+$/i.test(host);
+  if (!hostValid) return false;
+
+  // Path part (optional): letters, digits, hyphens, underscores, and slashes.
+  if (path && !/^[a-z0-9_\-\/]+$/i.test(path)) return false;
+
+  return true;
+}
+
 function renderDomainRules(): void {
   if (!domainRulesList) return;
   domainRulesList.innerHTML = '';
   domainTagRules.forEach((rule, index) => {
     const item = document.createElement('div');
     item.className = 'domain-rule-item';
-    item.innerHTML = `
-      <span class="domain-rule-domain">${escapeHtml(rule.domain)}</span>
-      <span class="domain-rule-tags">${escapeHtml(rule.tags.join(', '))}</span>
-      <button type="button" class="domain-rule-remove" data-index="${index}" data-i18n="removeDomainRule">删除</button>
-    `;
-    item.querySelector('.domain-rule-remove')?.addEventListener('click', () => removeDomainRule(index));
+
+    if (editingRuleIndex === index) {
+      item.innerHTML = `
+        <input type="text" class="domain-rule-edit-domain" value="${escapeHtml(rule.domain)}" />
+        <input type="text" class="domain-rule-edit-tags" value="${escapeHtml(rule.tags.join(', '))}" />
+        <div class="domain-rule-actions">
+          <button type="button" class="domain-rule-save" data-index="${index}" data-i18n="saveDomainRule">保存</button>
+          <button type="button" class="domain-rule-remove" data-index="${index}" data-i18n="removeDomainRule">删除</button>
+        </div>
+      `;
+      item.querySelector('.domain-rule-save')?.addEventListener('click', () => saveDomainRule(index));
+      item.querySelector('.domain-rule-remove')?.addEventListener('click', () => removeDomainRule(index));
+      item.querySelector('.domain-rule-edit-domain')?.addEventListener('keydown', (e) => {
+        if ((e as KeyboardEvent).key === 'Enter') saveDomainRule(index);
+      });
+      item.querySelector('.domain-rule-edit-tags')?.addEventListener('keydown', (e) => {
+        if ((e as KeyboardEvent).key === 'Enter') saveDomainRule(index);
+      });
+    } else {
+      item.innerHTML = `
+        <span class="domain-rule-domain">${escapeHtml(rule.domain)}</span>
+        <span class="domain-rule-tags">${escapeHtml(rule.tags.join(', '))}</span>
+        <div class="domain-rule-actions">
+          <button type="button" class="domain-rule-edit" data-index="${index}" data-i18n="editDomainRule">编辑</button>
+          <button type="button" class="domain-rule-remove" data-index="${index}" data-i18n="removeDomainRule">删除</button>
+        </div>
+      `;
+      item.querySelector('.domain-rule-edit')?.addEventListener('click', () => startEditingDomainRule(index));
+      item.querySelector('.domain-rule-remove')?.addEventListener('click', () => removeDomainRule(index));
+    }
+
     domainRulesList.appendChild(item);
   });
   localizePage();
 }
 
+function startEditingDomainRule(index: number): void {
+  editingRuleIndex = index;
+  renderDomainRules();
+  const input = domainRulesList?.querySelector('.domain-rule-edit-domain') as HTMLInputElement | null;
+  input?.focus();
+}
+
+function saveDomainRule(index: number): void {
+  if (!domainRulesList) return;
+  const domainInput = domainRulesList.querySelector('.domain-rule-edit-domain') as HTMLInputElement | null;
+  const tagsInput = domainRulesList.querySelector('.domain-rule-edit-tags') as HTMLInputElement | null;
+  if (!domainInput || !tagsInput) return;
+
+  const domain = normalizeDomain(domainInput.value);
+  const tags = parseTagsInput(tagsInput.value);
+
+  if (!isValidDomain(domainInput.value)) {
+    alert(t('invalidDomain'));
+    return;
+  }
+  if (!domain || tags.length === 0) return;
+
+  domainTagRules = domainTagRules.map((rule, i) => (i === index ? { domain, tags } : rule));
+  editingRuleIndex = null;
+  renderDomainRules();
+}
+
 function addDomainRule(): void {
   if (!domainRuleDomain || !domainRuleTags) return;
-  const domain = normalizeDomain(domainRuleDomain.value);
+  const rawDomain = domainRuleDomain.value;
+  if (!isValidDomain(rawDomain)) {
+    alert(t('invalidDomain'));
+    return;
+  }
+  const domain = normalizeDomain(rawDomain);
   const tags = parseTagsInput(domainRuleTags.value);
   if (!domain || tags.length === 0) return;
   domainTagRules = [...domainTagRules, { domain, tags }];
@@ -74,6 +149,7 @@ function addDomainRule(): void {
 
 function removeDomainRule(index: number): void {
   domainTagRules = domainTagRules.filter((_, i) => i !== index);
+  if (editingRuleIndex === index) editingRuleIndex = null;
   renderDomainRules();
 }
 

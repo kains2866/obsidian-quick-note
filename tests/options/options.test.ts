@@ -352,6 +352,48 @@ describe('options page', () => {
       const settings = readSettings();
       expect(settings.domainTagRules).toEqual([]);
     });
+
+    it('edits a rule and saves the updated domain and tags', async () => {
+      const storedSettings: ExtensionSettings = {
+        ...DEFAULT_SETTINGS,
+        domainTagRules: [{ domain: 'bilibili.com', tags: ['bilibili'] }],
+      };
+      await loadOptions({ storedSettings });
+      const { loadSettings } = await import('../../src/options/options.js');
+      await loadSettings();
+
+      const editBtn = document.querySelector('.domain-rule-edit') as HTMLButtonElement;
+      editBtn.click();
+
+      const domainInput = document.querySelector('.domain-rule-edit-domain') as HTMLInputElement;
+      const tagsInput = document.querySelector('.domain-rule-edit-tags') as HTMLInputElement;
+      const saveBtn = document.querySelector('.domain-rule-save') as HTMLButtonElement;
+
+      domainInput.value = '163.com/news';
+      tagsInput.value = '网易新闻';
+      saveBtn.click();
+
+      await vi.waitFor(() => {
+        expect(document.querySelector('.domain-rule-domain')?.textContent).toBe('163.com/news');
+      });
+
+      const { readSettings } = await import('../../src/options/options.js');
+      const settings = readSettings();
+      expect(settings.domainTagRules).toEqual([{ domain: '163.com/news', tags: ['网易新闻'] }]);
+    });
+
+    it('rejects invalid domain input with an apostrophe', async () => {
+      await loadOptions();
+      const domainInput = document.getElementById('domain-rule-domain') as HTMLInputElement;
+      const tagsInput = document.getElementById('domain-rule-tags') as HTMLInputElement;
+      const addBtn = document.getElementById('add-domain-rule') as HTMLButtonElement;
+
+      domainInput.value = "sa'd";
+      tagsInput.value = 'tag';
+      addBtn.click();
+
+      expect(document.querySelectorAll('.domain-rule-item').length).toBe(0);
+    });
   });
 
   describe('loadCurrentShortcut flow', () => {
