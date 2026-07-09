@@ -81,17 +81,19 @@
       <small data-i18n="autoSelectFirstTagHint">打开 popup 时自动勾选 tags 池的第一个 tag</small>
 
       <section class="domain-tag-rules">
-        <h2 data-i18n="domainTagRulesTitle">网站自动 tags（即将上线）</h2>
-        <p data-i18n="domainTagRulesHint">后续版本将支持根据访问网站自动添加 tags，当前请先使用 popup 标签栏手动选择。</p>
-        <div class="domain-rule-form disabled">
+        <h2 data-i18n="domainTagRulesTitle">网站自动 tags</h2>
+        <p data-i18n="domainTagRulesHint">当访问的网页域名匹配下方规则时，对应的 tags 会自动在 popup 中勾选。</p>
+        <div id="domain-rules-list" class="domain-rules-list"></div>
+        <div class="domain-rule-form">
           <label>
             <span data-i18n="domainTagRulesDomainLabel">域名</span>
-            <input type="text" value="bilibili.com" disabled />
+            <input type="text" id="domain-rule-domain" data-i18n-placeholder="domainRuleDomainPlaceholder" placeholder="例如 bilibili.com" />
           </label>
           <label>
             <span data-i18n="domainTagRulesTagsLabel">自动添加 tags</span>
-            <input type="text" value="bilibili, 视频笔记" disabled />
+            <input type="text" id="domain-rule-tags" data-i18n-placeholder="domainRuleTagsPlaceholder" placeholder="例如 bilibili, 视频笔记" />
           </label>
+          <button type="button" id="add-domain-rule" data-i18n="addDomainRule">添加规则</button>
         </div>
       </section>
 
