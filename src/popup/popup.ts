@@ -49,8 +49,6 @@ const targetPathEl = document.getElementById('target-path') as HTMLDivElement;
 const targetEditEl = document.getElementById('target-edit') as HTMLDivElement;
 const targetFolderInput = document.getElementById('target-folder-input') as HTMLInputElement;
 const targetFilenameInput = document.getElementById('target-filename-input') as HTMLInputElement;
-const targetEditSave = document.getElementById('target-edit-save') as HTMLButtonElement;
-const targetEditCancel = document.getElementById('target-edit-cancel') as HTMLButtonElement;
 const charCountEl = document.getElementById('char-count') as HTMLSpanElement;
 const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
@@ -538,50 +536,24 @@ export function closeTargetEdit(): void {
   targetEditEl.classList.remove('visible');
 }
 
-function normalizeFilenameInput(value: string): string {
-  return value.trim().replace(/\.md$/i, '');
+export function toggleTargetEdit(): void {
+  if (targetEditEl.classList.contains('visible')) {
+    closeTargetEdit();
+  } else {
+    openTargetEdit();
+  }
 }
 
-function guessToggleStateFromFilename(filename: string, date = new Date()): {
-  includeTitle: boolean;
-  includeUrl: boolean;
-} {
-  const normalized = normalizeFilenameInput(filename);
-  if (!normalized) {
-    return { includeTitle: toggleTitle.checked, includeUrl: toggleUrl.checked };
-  }
-
-  const titleName = generateFilename(editor.value, pageInfo, true, false, date);
-  const urlName = generateFilename(editor.value, pageInfo, false, true, date);
-
-  if (normalized === titleName) {
-    return { includeTitle: true, includeUrl: false };
-  }
-  if (normalized === urlName) {
-    return { includeTitle: false, includeUrl: true };
-  }
-  return { includeTitle: false, includeUrl: false };
-}
-
-export function saveTargetEdit(): void {
-  if (!currentTabId) return;
-
-  const rawFilename = targetFilenameInput.value.trim();
-  const date = new Date();
-  const { includeTitle, includeUrl } = guessToggleStateFromFilename(rawFilename, date);
-
-  toggleTitle.checked = includeTitle;
-  toggleUrl.checked = includeUrl;
-
-  draft = {
-    ...getCurrentDraft(),
-    targetFolder: targetFolderInput.value.trim(),
-    // Empty filename means "fall back to auto-generated filename".
-    targetFilename: rawFilename,
-  };
+function handleTargetFolderInput(): void {
+  draft = { ...getCurrentDraft(), targetFolder: targetFolderInput.value.trim() };
   saveDraft();
   updateTargetPath();
-  closeTargetEdit();
+}
+
+function handleTargetFilenameInput(): void {
+  draft = { ...getCurrentDraft(), targetFilename: targetFilenameInput.value.trim() };
+  saveDraft();
+  updateTargetPath();
 }
 
 editor.addEventListener('input', () => {
@@ -617,9 +589,9 @@ toggleUrl.addEventListener('change', () => {
   saveDraft();
 });
 saveBtn.addEventListener('click', handleSave);
-targetPathEl.addEventListener('click', openTargetEdit);
-targetEditSave.addEventListener('click', saveTargetEdit);
-targetEditCancel.addEventListener('click', closeTargetEdit);
+targetPathEl.addEventListener('click', toggleTargetEdit);
+targetFolderInput.addEventListener('input', handleTargetFolderInput);
+targetFilenameInput.addEventListener('input', handleTargetFilenameInput);
 
 // Defensive save before the popup closes so the latest draft is persisted even if
 // an async input handler was interrupted.

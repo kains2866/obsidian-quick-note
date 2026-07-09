@@ -20,14 +20,10 @@ const POPUP_HTML = `
     <div class="target-edit" id="target-edit">
       <label>文件夹 <input type="text" id="target-folder-input" placeholder="覆盖文件夹" /></label>
       <label>文件名 <input type="text" id="target-filename-input" placeholder="覆盖文件名" /></label>
-      <div class="target-edit-actions">
-        <button id="target-edit-save" type="button">保存</button>
-        <button id="target-edit-cancel" type="button">取消</button>
+      <div class="target-edit-toggles">
+        <label><input type="checkbox" id="toggle-url" /> URL</label>
+        <label><input type="checkbox" id="toggle-title" /> 标题</label>
       </div>
-    </div>
-    <div class="toggles">
-      <label><input type="checkbox" id="toggle-url" /> URL</label>
-      <label><input type="checkbox" id="toggle-title" /> 标题</label>
     </div>
     <div class="frontmatter-section" id="frontmatter-section">
       <div class="frontmatter-header" id="frontmatter-header">
@@ -922,18 +918,25 @@ describe('popup', () => {
         }
         return Promise.resolve({ ok: true });
       });
-      const { init, openTargetEdit, saveTargetEdit, handleSave } = await loadPopup({
+      const { init, openTargetEdit, getCurrentDraft, handleSave } = await loadPopup({
         storedSettings: SETTINGS_WITH_VAULT,
         sendMessage,
       });
       await init();
 
       openTargetEdit();
-      (document.getElementById('target-folder-input') as HTMLInputElement).value =
-        'override/folder';
-      (document.getElementById('target-filename-input') as HTMLInputElement).value =
-        'override-file';
-      await saveTargetEdit();
+      const folderInput = document.getElementById('target-folder-input') as HTMLInputElement;
+      const filenameInput = document.getElementById('target-filename-input') as HTMLInputElement;
+      folderInput.value = 'override/folder';
+      folderInput.dispatchEvent(new Event('input', { bubbles: true }));
+      filenameInput.value = 'override-file';
+      filenameInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      await vi.waitFor(() => {
+        const currentDraft = getCurrentDraft();
+        expect(currentDraft.targetFolder).toBe('override/folder');
+        expect(currentDraft.targetFilename).toBe('override-file');
+      });
 
       const editor = document.getElementById('editor') as HTMLTextAreaElement;
       editor.value = 'override note';
@@ -947,6 +950,44 @@ describe('popup', () => {
       expect(openMessage.url).toContain(
         'file=' + encodeURIComponent('override/folder/override-file'),
       );
+    });
+
+    it('auto-saves folder and filename on input', async () => {
+      const { init, openTargetEdit, getCurrentDraft } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        storedDraft: DEFAULT_DRAFT,
+      });
+      await init();
+
+      openTargetEdit();
+      const folderInput = document.getElementById('target-folder-input') as HTMLInputElement;
+      const filenameInput = document.getElementById('target-filename-input') as HTMLInputElement;
+
+      folderInput.value = 'notes/2026';
+      folderInput.dispatchEvent(new Event('input', { bubbles: true }));
+      await vi.waitFor(() => expect(getCurrentDraft().targetFolder).toBe('notes/2026'));
+
+      filenameInput.value = 'my-file';
+      filenameInput.dispatchEvent(new Event('input', { bubbles: true }));
+      await vi.waitFor(() => expect(getCurrentDraft().targetFilename).toBe('my-file'));
+    });
+
+    it('falls back to auto-generated filename when filename input is cleared', async () => {
+      const { init, openTargetEdit, getCurrentDraft, updateTargetPath } = await loadPopup({
+        storedSettings: SETTINGS_WITH_VAULT,
+        storedDraft: { ...DEFAULT_DRAFT, targetFilename: 'manual-file' },
+      });
+      await init();
+
+      openTargetEdit();
+      const filenameInput = document.getElementById('target-filename-input') as HTMLInputElement;
+      filenameInput.value = '';
+      filenameInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      await vi.waitFor(() => expect(getCurrentDraft().targetFilename).toBe(''));
+      updateTargetPath();
+      const targetPath = document.getElementById('target-path') as HTMLDivElement;
+      expect(targetPath.textContent).not.toContain('manual-file');
     });
 
     it('clears manual filename override when toggling URL/Title', async () => {
@@ -985,49 +1026,21 @@ describe('popup', () => {
       expect(filenameInput.placeholder.length).toBeGreaterThan(0);
     });
 
-    it('checks title toggle when manual filename matches page title', async () => {
-      const { init, openTargetEdit, saveTargetEdit } = await loadPopup({
+    it('toggles target edit panel when clicking target path', async () => {
+      const { init, toggleTargetEdit } = await loadPopup({
         storedSettings: SETTINGS_WITH_VAULT,
+        storedDraft: DEFAULT_DRAFT,
       });
       await init();
 
-      openTargetEdit();
-      (document.getElementById('target-filename-input') as HTMLInputElement).value = 'Example Page';
-      await saveTargetEdit();
+      const targetEdit = document.getElementById('target-edit') as HTMLDivElement;
+      expect(targetEdit.classList.contains('visible')).toBe(false);
 
-      expect((document.getElementById('toggle-title') as HTMLInputElement).checked).toBe(true);
-      expect((document.getElementById('toggle-url') as HTMLInputElement).checked).toBe(false);
-    });
+      toggleTargetEdit();
+      expect(targetEdit.classList.contains('visible')).toBe(true);
 
-    it('checks URL toggle when manual filename matches page URL', async () => {
-      const { init, openTargetEdit, saveTargetEdit } = await loadPopup({
-        storedSettings: SETTINGS_WITH_VAULT,
-      });
-      await init();
-
-      openTargetEdit();
-      // generateFilename sanitizes '/' to '-', so the stored URL-based filename is "example.com-path".
-      (document.getElementById('target-filename-input') as HTMLInputElement).value =
-        'example.com-path';
-      await saveTargetEdit();
-
-      expect((document.getElementById('toggle-title') as HTMLInputElement).checked).toBe(false);
-      expect((document.getElementById('toggle-url') as HTMLInputElement).checked).toBe(true);
-    });
-
-    it('unchecks both toggles when manual filename matches neither title nor URL', async () => {
-      const { init, openTargetEdit, saveTargetEdit } = await loadPopup({
-        storedSettings: SETTINGS_WITH_VAULT,
-      });
-      await init();
-
-      openTargetEdit();
-      (document.getElementById('target-filename-input') as HTMLInputElement).value =
-        'completely-custom-name';
-      await saveTargetEdit();
-
-      expect((document.getElementById('toggle-title') as HTMLInputElement).checked).toBe(false);
-      expect((document.getElementById('toggle-url') as HTMLInputElement).checked).toBe(false);
+      toggleTargetEdit();
+      expect(targetEdit.classList.contains('visible')).toBe(false);
     });
 
     it('syncs auto-generated filename back into target edit when toggling while editing', async () => {

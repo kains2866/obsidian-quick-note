@@ -92,46 +92,13 @@ body {
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.target-edit-actions {
+.target-edit-toggles {
   display: flex;
-  gap: 8px;
+  gap: 16px;
   margin-top: 10px;
 }
 
-.target-edit-actions button {
-  flex: 1;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--ink);
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.target-edit-actions button:hover {
-  background: var(--bg);
-}
-
-.target-edit-actions button:last-child {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: white;
-}
-
-.target-edit-actions button:last-child:hover {
-  background: var(--accent-hover);
-}
-
-.toggles {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.toggles label {
+.target-edit-toggles label {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -140,7 +107,7 @@ body {
   cursor: pointer;
 }
 
-.toggles input[type="checkbox"] {
+.target-edit-toggles input[type="checkbox"] {
   width: 16px;
   height: 16px;
   accent-color: var(--accent);
