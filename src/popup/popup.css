@@ -77,6 +77,29 @@
   box-sizing: border-box;
 }
 
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-muted);
+}
+
+body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
 body {
   width: 420px;
   margin: 0;
@@ -430,4 +453,18 @@ textarea:focus {
 .error {
   color: var(--error);
   font-weight: 500;
+}
+
+/* Dark mode polish */
+:root[data-theme="dark"] #open-options {
+  color: var(--accent);
+}
+
+:root[data-theme="dark"] #open-options:hover {
+  background: var(--bg);
+  color: var(--accent-hover);
+}
+
+:root[data-theme="dark"] ::placeholder {
+  color: var(--ink-muted);
 }

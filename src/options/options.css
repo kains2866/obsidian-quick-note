@@ -665,11 +665,50 @@ button[type="submit"]:active {
   object-fit: cover;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
+  padding: 0.5rem;
+  background: #ffffff;
 }
 
 .qr-grid figcaption {
   margin-top: 0.4rem;
   font-size: 12px;
+  color: var(--ink-muted);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-muted);
+}
+
+body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+/* Dark mode polish */
+:root[data-theme="dark"] .preview-box strong {
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .guide summary::marker {
+  color: var(--ink-muted);
+}
+
+:root[data-theme="dark"] ::placeholder {
   color: var(--ink-muted);
 }
 
