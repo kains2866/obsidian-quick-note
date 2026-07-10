@@ -342,9 +342,12 @@ updateSavePathPreview();
 loadSettings()
   .then(() => {
     updateSavePathPreview();
+    // Load the shortcut after settings are rendered so localizePage() calls
+    // inside renderDomainRules() do not overwrite the result.
+    return loadCurrentShortcut();
   })
   .catch(() => {
     // In non-extension contexts (e.g. local dev server) chrome may be unavailable.
     updateSavePathPreview();
+    loadCurrentShortcut().catch(() => {});
   });
-loadCurrentShortcut();
