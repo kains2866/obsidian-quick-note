@@ -32,6 +32,11 @@ const FORM_HTML = `
       <option value="datetime">YYYY-MM-DD HH:mm:ss</option>
       <option value="iso">ISO 8601</option>
     </select>
+    <select id="theme">
+      <option value="auto">System</option>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
     <input type="checkbox" id="fm-title" />
     <input type="checkbox" id="fm-date" />
     <input type="checkbox" id="fm-url" />
@@ -209,6 +214,18 @@ describe('options page', () => {
       expect(settings.autoSelectFirstTag).toBe(false);
     });
 
+    it('reads theme from the select and defaults to auto', async () => {
+      const { readSettings } = await loadOptions();
+      (document.getElementById('theme') as HTMLSelectElement).value = 'dark';
+      expect(readSettings().theme).toBe('dark');
+
+      (document.getElementById('theme') as HTMLSelectElement).value = 'auto';
+      expect(readSettings().theme).toBe('auto');
+
+      (document.getElementById('theme') as HTMLSelectElement).value = 'invalid';
+      expect(readSettings().theme).toBe('auto');
+    });
+
     it('returns empty domain tag rules by default', async () => {
       const { readSettings } = await loadOptions();
       const settings = readSettings();
@@ -269,6 +286,9 @@ describe('options page', () => {
       expect(
         (document.getElementById('auto-select-first-tag') as HTMLInputElement).checked,
       ).toBe(DEFAULT_SETTINGS.autoSelectFirstTag);
+      expect(
+        (document.getElementById('theme') as HTMLSelectElement).value,
+      ).toBe(DEFAULT_SETTINGS.theme);
     });
   });
 

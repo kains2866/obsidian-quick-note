@@ -8,7 +8,8 @@ import {
 } from '../shared/constants.js';
 import { renderTemplate } from '../shared/templates.js';
 import { getLanguage, t, localizePage, localizePlaceholders } from '../shared/i18n.js';
-import type { ExtensionSettings, DateFormat } from '../shared/types.js';
+import { applyTheme } from '../shared/theme-utils.js';
+import type { ExtensionSettings, DateFormat, Theme } from '../shared/types.js';
 
 document.documentElement.lang = getLanguage();
 document.title = t('optionsTitle');
@@ -183,6 +184,7 @@ initFooterMetadata();
 
 export async function loadSettings(): Promise<void> {
   const settings = await getSettings();
+  applyTheme(settings.theme);
   $('vault-name').value = settings.vaultName;
   $('base-folder').value = settings.baseFolder;
   $('date-template').value = settings.dateSubfolderTemplate;
@@ -199,6 +201,7 @@ export async function loadSettings(): Promise<void> {
   $('fm-site').checked = settings.includeFrontmatterSite;
   $('fm-tags').checked = settings.includeFrontmatterTags;
   $('default-tags').value = settings.defaultTags.join(', ');
+  $('theme').value = settings.theme;
   domainTagRules = settings.domainTagRules.map((rule) => ({
     domain: rule.domain,
     tags: [...rule.tags],
@@ -230,6 +233,9 @@ export function readSettings(): ExtensionSettings {
     ? rawDateFormat
     : DEFAULT_SETTINGS.dateFormat;
 
+  const rawTheme = $('theme').value as Theme;
+  const theme: Theme = ['light', 'dark', 'auto'].includes(rawTheme) ? rawTheme : 'auto';
+
   return {
     vaultName: $('vault-name').value.trim(),
     baseFolder: $('base-folder').value.trim(),
@@ -251,6 +257,7 @@ export function readSettings(): ExtensionSettings {
       domain: rule.domain,
       tags: [...rule.tags],
     })),
+    theme,
   };
 }
 
@@ -327,6 +334,15 @@ document.getElementById('settings-form')?.addEventListener('submit', async (e) =
 const settingsForm = document.getElementById('settings-form');
 settingsForm?.addEventListener('input', markDirty);
 settingsForm?.addEventListener('change', markDirty);
+
+document.getElementById('theme')?.addEventListener('change', (event) => {
+  const target = event.target as HTMLSelectElement;
+  const theme: Theme = ['light', 'dark', 'auto'].includes(target.value)
+    ? (target.value as Theme)
+    : 'auto';
+  applyTheme(theme);
+  markDirty();
+});
 
 window.addEventListener('beforeunload', (event) => {
   if (!isDirty) return;

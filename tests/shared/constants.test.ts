@@ -26,6 +26,10 @@ describe('DEFAULT_SETTINGS', () => {
   it('has empty domainTagRules by default', () => {
     expect(DEFAULT_SETTINGS.domainTagRules).toEqual([]);
   });
+
+  it('has theme set to auto by default', () => {
+    expect(DEFAULT_SETTINGS.theme).toBe('auto');
+  });
 });
 
 describe('branding constants', () => {
