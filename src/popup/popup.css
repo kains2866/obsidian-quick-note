@@ -9,10 +9,34 @@
   --accent: #65b687;
   --accent-hover: #4d946c;
   --accent-soft: #e8f5ed;
+  --accent-border: #bfe5cf;
+  --hover-bg: rgba(0, 0, 0, 0.02);
+  --code-bg: #e5e7eb;
+  --error-soft: #fef2f2;
+  --save-btn-text: #ffffff;
   --success: #16a34a;
   --error: #dc2626;
   --radius: 10px;
   --radius-sm: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1d21;
+    --surface: #252a30;
+    --ink: #f3f4f6;
+    --ink-muted: #9ca3af;
+    --ink-subtle: #6b7280;
+    --border: #374151;
+    --border-strong: #4b5563;
+    --accent: #65b687;
+    --accent-hover: #4d946c;
+    --accent-soft: rgba(101, 182, 135, 0.15);
+    --accent-border: rgba(101, 182, 135, 0.35);
+    --hover-bg: rgba(255, 255, 255, 0.04);
+    --code-bg: #374151;
+    --error-soft: rgba(248, 113, 113, 0.12);
+  }
 }
 
 * {
@@ -233,7 +257,7 @@ body {
 }
 
 .frontmatter-header:hover {
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--hover-bg);
 }
 
 .frontmatter-summary {
@@ -327,7 +351,7 @@ textarea:focus {
   border: none;
   border-radius: var(--radius-sm);
   background: var(--accent);
-  color: white;
+  color: var(--save-btn-text);
   cursor: pointer;
   transition: background 0.15s ease, transform 0.05s ease;
 }
