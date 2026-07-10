@@ -33,9 +33,9 @@ const FORM_HTML = `
       <option value="iso">ISO 8601</option>
     </select>
     <select id="theme">
-      <option value="auto">System</option>
-      <option value="light">Light</option>
-      <option value="dark">Dark</option>
+      <option value="light">Light mode</option>
+      <option value="dark">Dark mode</option>
+      <option value="auto">Auto</option>
     </select>
     <input type="checkbox" id="fm-title" />
     <input type="checkbox" id="fm-date" />
