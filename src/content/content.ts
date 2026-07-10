@@ -640,6 +640,12 @@ export function extractSelectedContent(selection: Selection | null): string {
 // popup can still import the highlighted text in that flow.
 let cachedSelectionText = '';
 let cachedSelectedContent = '';
+let lastHref = window.location.href;
+
+function clearCachedSelection(): void {
+  cachedSelectionText = '';
+  cachedSelectedContent = '';
+}
 
 function updateCachedSelection(): void {
   const selection = window.getSelection();
@@ -653,8 +659,7 @@ function updateCachedSelection(): void {
 function clearCachedSelectionIfEmpty(): void {
   const selection = window.getSelection();
   if (!selection || selection.toString() === '') {
-    cachedSelectionText = '';
-    cachedSelectedContent = '';
+    clearCachedSelection();
   }
 }
 
@@ -675,6 +680,35 @@ document.addEventListener('keyup', (event) => {
     clearCachedSelectionIfEmpty();
   }
 });
+
+// Clear the cache when the page navigates within the same tab (SPA hash/popstate
+// navigation, or history pushState/replaceState), so stale selection text from a
+// previous page is not imported for the new page.
+window.addEventListener('popstate', () => {
+  lastHref = window.location.href;
+  clearCachedSelection();
+});
+window.addEventListener('hashchange', () => {
+  lastHref = window.location.href;
+  clearCachedSelection();
+});
+
+const originalPushState = history.pushState.bind(history);
+const originalReplaceState = history.replaceState.bind(history);
+history.pushState = function pushState(...args) {
+  originalPushState(...args);
+  if (window.location.href !== lastHref) {
+    lastHref = window.location.href;
+    clearCachedSelection();
+  }
+};
+history.replaceState = function replaceState(...args) {
+  originalReplaceState(...args);
+  if (window.location.href !== lastHref) {
+    lastHref = window.location.href;
+    clearCachedSelection();
+  }
+};
 
 function cleanTitle(title: string, siteName: string): string {
   if (!title) return title;

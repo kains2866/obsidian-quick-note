@@ -12,6 +12,12 @@ import { formatFrontmatterDate } from '../../src/shared/templates.js';
 import { t } from '../../src/shared/i18n.js';
 import type { ExtensionSettings, Draft, PageInfo } from '../../src/shared/types.js';
 
+vi.mock('../../src/shared/theme-utils.js', () => ({
+  applyTheme: vi.fn(),
+}));
+
+import { applyTheme } from '../../src/shared/theme-utils.js';
+
 type PopupModule = typeof import('../../src/popup/popup.js');
 
 const POPUP_HTML = `
@@ -523,6 +529,22 @@ describe('popup', () => {
       });
       await init();
       expect(getCurrentDraft().selectedTags).toEqual([]);
+    });
+
+    it('applies the stored theme on init', async () => {
+      const { init } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, theme: 'dark' },
+      });
+      await init();
+      expect(applyTheme).toHaveBeenCalledWith('dark');
+    });
+
+    it('applies auto theme on init when theme is auto', async () => {
+      const { init } = await loadPopup({
+        storedSettings: { ...SETTINGS_WITH_VAULT, theme: 'auto' },
+      });
+      await init();
+      expect(applyTheme).toHaveBeenCalledWith('auto');
     });
   });
 

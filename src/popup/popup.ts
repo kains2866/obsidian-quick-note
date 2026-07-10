@@ -263,7 +263,8 @@ function ruleMatchesUrl(ruleDomain: string, url: string): boolean {
   const parsedRule = parseRuleDomain(ruleDomain);
   if (!parsedRule) return false;
 
-  const hostMatches = pageHost.includes(parsedRule.host);
+  const hostMatches =
+    pageHost === parsedRule.host || pageHost.endsWith('.' + parsedRule.host);
   if (!hostMatches) return false;
   if (!parsedRule.path) return true;
   return pagePath.startsWith(parsedRule.path);

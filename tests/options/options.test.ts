@@ -349,7 +349,7 @@ describe('options page', () => {
       expect(settings.domainTagRules).toEqual([{ domain: 'github.com', tags: ['github', 'dev'] }]);
     });
 
-    it('normalizes a full URL domain to just the hostname', async () => {
+    it('normalizes a full URL domain to hostname and path', async () => {
       await loadOptions();
       const domainInput = document.getElementById('domain-rule-domain') as HTMLInputElement;
       const tagsInput = document.getElementById('domain-rule-tags') as HTMLInputElement;
@@ -364,11 +364,11 @@ describe('options page', () => {
       });
 
       const displayedDomain = document.querySelector('.domain-rule-domain')?.textContent;
-      expect(displayedDomain).toBe('news.163.com');
+      expect(displayedDomain).toBe('news.163.com/path');
 
       const { readSettings } = await import('../../src/options/options.js');
       const settings = readSettings();
-      expect(settings.domainTagRules).toEqual([{ domain: 'news.163.com', tags: ['网易新闻'] }]);
+      expect(settings.domainTagRules).toEqual([{ domain: 'news.163.com/path', tags: ['网易新闻'] }]);
     });
 
     it('removes a rule when clicking delete', async () => {

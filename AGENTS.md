@@ -18,10 +18,10 @@
 
 ## 二、技术栈与目录
 
-- **框架**：React + TypeScript + Vite
-- **测试**：Vitest + React Testing Library
+- **框架**：TypeScript + Vite
+- **测试**：Vitest
 - **产物**：Chrome 浏览器扩展（Manifest V3）
-- **入口**：`src/popup/`、`src/options/`、`src/background/`、`src/content-script/`
+- **入口**：`src/popup/`、`src/options/`、`src/background/`、`src/content/`
 
 ```
 obsidian-quick-note/

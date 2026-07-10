@@ -65,7 +65,9 @@ function normalizeDomain(value: string): string {
   let domain = value.trim();
   if (domain.includes('://')) {
     try {
-      domain = new URL(domain).hostname;
+      const parsed = new URL(domain);
+      const path = parsed.pathname.replace(/\/$/, '');
+      domain = parsed.hostname + path;
     } catch {
       // Keep the raw value if it's not a valid URL.
     }
@@ -84,8 +86,8 @@ function isValidDomain(value: string): boolean {
   const hostValid = /^[a-z0-9\u4e00-\u9fa5]([a-z0-9\-\u4e00-\u9fa5]*\.?)+$/i.test(host);
   if (!hostValid) return false;
 
-  // Path part (optional): letters, digits, hyphens, underscores, and slashes.
-  if (path && !/^[a-z0-9_\-\/]+$/i.test(path)) return false;
+  // Path part (optional): letters, digits, hyphens, underscores, dots, slashes, and unicode letters.
+  if (path && !/^[a-z0-9_\-\/\.\u4e00-\u9fa5]+$/i.test(path)) return false;
 
   return true;
 }
@@ -152,7 +154,10 @@ function saveDomainRule(index: number): void {
     alert(t('invalidDomain'));
     return;
   }
-  if (!domain || tags.length === 0) return;
+  if (!domain || tags.length === 0) {
+    alert(t('emptyDomainOrTags'));
+    return;
+  }
 
   domainTagRules = domainTagRules.map((rule, i) => (i === index ? { domain, tags } : rule));
   editingRuleIndex = null;
@@ -169,7 +174,10 @@ function addDomainRule(): void {
   }
   const domain = normalizeDomain(rawDomain);
   const tags = parseTagsInput(domainRuleTags.value);
-  if (!domain || tags.length === 0) return;
+  if (!domain || tags.length === 0) {
+    alert(t('emptyDomainOrTags'));
+    return;
+  }
   domainTagRules = [...domainTagRules, { domain, tags }];
   domainRuleDomain.value = '';
   domainRuleTags.value = '';
@@ -241,6 +249,8 @@ export async function loadCurrentShortcut(): Promise<void> {
   } catch {
     shortcutEl.textContent = t('shortcutReadFailed');
   }
+  // Prevent later localizePage() calls from overwriting the resolved shortcut.
+  shortcutEl.removeAttribute('data-i18n');
 }
 
 const VALID_DATE_FORMATS: DateFormat[] = ['date', 'datetime', 'iso'];
@@ -361,6 +371,19 @@ getThemeToggle()?.addEventListener('click', () => {
   applyTheme(next);
   markDirty();
 });
+
+// When the options page stays open and the theme is set to auto, react to OS
+// theme changes without requiring a reload.
+if (typeof window !== 'undefined' && window.matchMedia) {
+  window
+    .matchMedia('(prefers-color-scheme: dark)')
+    .addEventListener('change', () => {
+      const current = (getThemeToggle()?.dataset.value as Theme) ?? 'auto';
+      if (current === 'auto') {
+        applyTheme('auto');
+      }
+    });
+}
 
 window.addEventListener('beforeunload', (event) => {
   if (!isDirty) return;
