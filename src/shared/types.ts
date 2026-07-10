@@ -1,4 +1,5 @@
 export type DateFormat = 'date' | 'datetime' | 'iso';
+export type Theme = 'light' | 'dark' | 'auto';
 
 export interface ExtensionSettings {
   vaultName: string;
@@ -18,6 +19,7 @@ export interface ExtensionSettings {
   autoSelectFirstTag: boolean;
   domainTagRules: Array<{ domain: string; tags: string[] }>;
   captureVideoProgress: boolean;
+  theme: Theme;
 }
 
 export type FrontmatterKey = 'title' | 'date' | 'url' | 'author' | 'description' | 'site' | 'tags';

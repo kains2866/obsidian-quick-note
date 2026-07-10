@@ -28,6 +28,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   autoSelectFirstTag: true,
   domainTagRules: [],
   captureVideoProgress: true,
+  theme: 'auto',
 };
 
 export const DEFAULT_DRAFT: Draft = {

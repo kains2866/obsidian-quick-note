@@ -1,6 +1,7 @@
 import { getSettings, getAllDrafts, clearDraft } from '../shared/storage.js';
 import { DEFAULT_DRAFT, STORAGE_KEYS, EXTENSION_NAME } from '../shared/constants.js';
 import { mergeSelectedText } from '../shared/draft-utils.js';
+import { applyTheme } from '../shared/theme-utils.js';
 import {
   renderTemplate,
   generateFilename,
@@ -111,6 +112,7 @@ let allDrafts: Record<number, Draft> = {};
 
 export async function init(): Promise<void> {
   settings = await getSettings();
+  applyTheme(settings.theme);
   allDrafts = await getAllDrafts();
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
