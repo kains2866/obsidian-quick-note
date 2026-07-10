@@ -9,11 +9,34 @@
   --accent: #65b687;
   --accent-hover: #4d946c;
   --accent-soft: #e8f5ed;
+  --accent-border: #bfe5cf;
+  --hover-bg: rgba(0, 0, 0, 0.02);
+  --code-bg: #e5e7eb;
+  --error-soft: #fef2f2;
   --success: #16a34a;
   --error: #dc2626;
   --warning: #dc2626;
   --radius: 12px;
   --radius-sm: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1d21;
+    --surface: #252a30;
+    --ink: #f3f4f6;
+    --ink-muted: #9ca3af;
+    --ink-subtle: #6b7280;
+    --border: #374151;
+    --border-strong: #4b5563;
+    --accent: #65b687;
+    --accent-hover: #4d946c;
+    --accent-soft: rgba(101, 182, 135, 0.15);
+    --accent-border: rgba(101, 182, 135, 0.35);
+    --hover-bg: rgba(255, 255, 255, 0.04);
+    --code-bg: #374151;
+    --error-soft: rgba(248, 113, 113, 0.12);
+  }
 }
 
 * {
@@ -174,7 +197,7 @@ fieldset select {
   margin: 1rem 0 1.25rem;
   padding: 1rem;
   background: var(--accent-soft);
-  border: 1px solid #bfe5cf;
+  border: 1px solid var(--accent-border);
   border-radius: var(--radius-sm);
 }
 
@@ -353,7 +376,7 @@ button[type="submit"]:active {
 }
 
 .domain-rule-actions button.domain-rule-remove:hover {
-  background: var(--error-soft, #fef2f2);
+  background: var(--error-soft);
   border-color: var(--error);
   color: var(--error);
 }
@@ -441,7 +464,7 @@ button[type="submit"]:active {
 }
 
 .guide code {
-  background: #e5e7eb;
+  background: var(--code-bg);
   padding: 0.15rem 0.35rem;
   border-radius: 4px;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
