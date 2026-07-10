@@ -32,11 +32,7 @@ const FORM_HTML = `
       <option value="datetime">YYYY-MM-DD HH:mm:ss</option>
       <option value="iso">ISO 8601</option>
     </select>
-    <select id="theme">
-      <option value="light">Light mode</option>
-      <option value="dark">Dark mode</option>
-      <option value="auto">Auto</option>
-    </select>
+    <button type="button" id="theme-toggle" data-value="auto"></button>
     <input type="checkbox" id="fm-title" />
     <input type="checkbox" id="fm-date" />
     <input type="checkbox" id="fm-url" />
@@ -214,16 +210,36 @@ describe('options page', () => {
       expect(settings.autoSelectFirstTag).toBe(false);
     });
 
-    it('reads theme from the select and defaults to auto', async () => {
+    it('reads theme from the toggle button and defaults to auto', async () => {
       const { readSettings } = await loadOptions();
-      (document.getElementById('theme') as HTMLSelectElement).value = 'dark';
+      const themeToggle = document.getElementById('theme-toggle') as HTMLButtonElement;
+
+      themeToggle.dataset.value = 'dark';
       expect(readSettings().theme).toBe('dark');
 
-      (document.getElementById('theme') as HTMLSelectElement).value = 'auto';
+      themeToggle.dataset.value = 'auto';
       expect(readSettings().theme).toBe('auto');
 
-      (document.getElementById('theme') as HTMLSelectElement).value = 'invalid';
+      themeToggle.dataset.value = 'invalid';
       expect(readSettings().theme).toBe('auto');
+    });
+
+    it('cycles theme when clicking the toggle button', async () => {
+      await loadOptions();
+      const themeToggle = document.getElementById('theme-toggle') as HTMLButtonElement;
+
+      themeToggle.dataset.value = 'auto';
+      themeToggle.click();
+      expect(themeToggle.dataset.value).toBe('light');
+      expect(themeToggle.textContent).toBe(t('themeLight'));
+
+      themeToggle.click();
+      expect(themeToggle.dataset.value).toBe('dark');
+      expect(themeToggle.textContent).toBe(t('themeDark'));
+
+      themeToggle.click();
+      expect(themeToggle.dataset.value).toBe('auto');
+      expect(themeToggle.textContent).toBe(t('themeAuto'));
     });
 
     it('returns empty domain tag rules by default', async () => {
@@ -286,9 +302,9 @@ describe('options page', () => {
       expect(
         (document.getElementById('auto-select-first-tag') as HTMLInputElement).checked,
       ).toBe(DEFAULT_SETTINGS.autoSelectFirstTag);
-      expect(
-        (document.getElementById('theme') as HTMLSelectElement).value,
-      ).toBe(DEFAULT_SETTINGS.theme);
+      const themeToggle = document.getElementById('theme-toggle') as HTMLButtonElement;
+      expect(themeToggle.dataset.value).toBe(DEFAULT_SETTINGS.theme);
+      expect(themeToggle.textContent).toBe(t('themeAuto'));
     });
   });
 
