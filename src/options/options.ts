@@ -370,8 +370,9 @@ window.addEventListener('beforeunload', (event) => {
 
 localizePage();
 localizePlaceholders();
-// Render an initial preview immediately using the default form values,
-// then refresh once stored settings are loaded.
+// Render an initial preview and theme label immediately using the default
+// form values, then refresh once stored settings are loaded.
+renderThemeButton(DEFAULT_SETTINGS.theme);
 updateSavePathPreview();
 loadSettings()
   .then(() => {
