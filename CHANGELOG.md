@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/lang/zh-CN/).
 
+## [0.4.2] - 2026-07-10
+
+### 新增
+
+- 主题切换：Options 页面支持一键切换浅色 / 深色 / 自动模式，popup 与设置页同步生效
+- Popup 标签栏：在 popup 中快速勾选/取消全局标签，支持临时新增标签
+- 网站自动 tags：按域名规则自动为匹配站点勾选对应 tags，支持路径匹配（如 `163.com/news`）
+- 默认选中第一个 tag：开启后 popup 打开时自动勾选标签池第一个标签
+- 离开设置页未保存时弹出确认提示，避免误丢配置
+
+### 修复
+
+- 修复设置页快捷键显示一直卡在「读取中」的问题
+- 修复右键打开 popup 时选中文本丢失的问题（#1）：点击页面或按 Escape 取消选区后不再保留旧选中内容
+- 修复深色模式下部分元素对比度不足、滚动条刺眼、二维码边界生硬等细节
+
+### 重构
+
+- 将主题切换按钮从「保存设置」旁移出，单独成一行，减少头部视觉干扰
+- 扩展名称、作者、GitHub 链接等元数据统一抽入 `src/shared/constants.ts`
+
 ## [0.3.3] - 2026-07-08
 
 ### 新增
