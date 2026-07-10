@@ -32,7 +32,6 @@ const FORM_HTML = `
       <option value="datetime">YYYY-MM-DD HH:mm:ss</option>
       <option value="iso">ISO 8601</option>
     </select>
-    <button type="button" id="theme-toggle" data-value="auto"></button>
     <input type="checkbox" id="fm-title" />
     <input type="checkbox" id="fm-date" />
     <input type="checkbox" id="fm-url" />
@@ -48,6 +47,10 @@ const FORM_HTML = `
     <div class="preview-box">
       <strong>保存位置预览</strong>
       <div id="save-path-preview">请先填写 Obsidian 仓库名</div>
+    </div>
+    <div class="theme-row">
+      <span class="theme-row-label">主题</span>
+      <button type="button" id="theme-toggle" data-value="auto"></button>
     </div>
     <button type="submit">保存设置</button>
     <span id="current-shortcut">当前快捷键：读取中…</span>
