@@ -133,11 +133,27 @@ h1 {
   white-space: nowrap;
 }
 
-.theme-select-label select {
+.theme-toggle {
   margin: 0;
-  padding: 0.4rem 0.6rem;
+  padding: 0.45rem 0.9rem;
+  min-width: 92px;
   font-size: 13px;
-  min-width: 100px;
+  font-weight: 600;
+  text-align: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--accent-hover);
+}
+
+.theme-toggle:active {
+  transform: translateY(1px);
 }
 
 .date-format-row {

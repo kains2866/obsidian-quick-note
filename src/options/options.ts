@@ -25,6 +25,24 @@ let domainTagRules: Array<{ domain: string; tags: string[] }> = [];
 let editingRuleIndex: number | null = null;
 let isDirty = false;
 
+const THEME_CYCLE: Theme[] = ['light', 'dark', 'auto'];
+const THEME_I18N_KEY: Record<Theme, string> = {
+  light: 'themeLight',
+  dark: 'themeDark',
+  auto: 'themeAuto',
+};
+
+function getThemeToggle(): HTMLButtonElement | null {
+  return document.getElementById('theme-toggle') as HTMLButtonElement | null;
+}
+
+function renderThemeButton(theme: Theme): void {
+  const btn = getThemeToggle();
+  if (!btn) return;
+  btn.dataset.value = theme;
+  btn.textContent = t(THEME_I18N_KEY[theme]);
+}
+
 function markDirty(): void {
   isDirty = true;
 }
@@ -201,7 +219,7 @@ export async function loadSettings(): Promise<void> {
   $('fm-site').checked = settings.includeFrontmatterSite;
   $('fm-tags').checked = settings.includeFrontmatterTags;
   $('default-tags').value = settings.defaultTags.join(', ');
-  $('theme').value = settings.theme;
+  renderThemeButton(settings.theme);
   domainTagRules = settings.domainTagRules.map((rule) => ({
     domain: rule.domain,
     tags: [...rule.tags],
@@ -233,7 +251,7 @@ export function readSettings(): ExtensionSettings {
     ? rawDateFormat
     : DEFAULT_SETTINGS.dateFormat;
 
-  const rawTheme = $('theme').value as Theme;
+  const rawTheme = (getThemeToggle()?.dataset.value as Theme) ?? 'auto';
   const theme: Theme = ['light', 'dark', 'auto'].includes(rawTheme) ? rawTheme : 'auto';
 
   return {
@@ -335,12 +353,12 @@ const settingsForm = document.getElementById('settings-form');
 settingsForm?.addEventListener('input', markDirty);
 settingsForm?.addEventListener('change', markDirty);
 
-document.getElementById('theme')?.addEventListener('change', (event) => {
-  const target = event.target as HTMLSelectElement;
-  const theme: Theme = ['light', 'dark', 'auto'].includes(target.value)
-    ? (target.value as Theme)
-    : 'auto';
-  applyTheme(theme);
+getThemeToggle()?.addEventListener('click', () => {
+  const current = (getThemeToggle()?.dataset.value as Theme) ?? 'auto';
+  const nextIndex = (THEME_CYCLE.indexOf(current) + 1) % THEME_CYCLE.length;
+  const next = THEME_CYCLE[nextIndex];
+  renderThemeButton(next);
+  applyTheme(next);
   markDirty();
 });
 
