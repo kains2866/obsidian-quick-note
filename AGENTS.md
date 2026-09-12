@@ -30,11 +30,11 @@ obsidian-quick-note/
 ├── tests/                # 测试文件
 ├── dist/                 # 构建产物（.gitignore）
 ├── coverage/             # 覆盖率报告（.gitignore）
-├── CHANGELOG.md          # 中文版变更日志
+├── CHANGELOG.md          # 中文版变更日志（内部文档，不进 Git）
 ├── README.md             # 中文版说明
 ├── README.en.md          # 英文版说明
 ├── privacy.html          # 隐私政策页面
-└── PRODUCT.md            # 产品定位与竞品对比
+└── PRODUCT.md            # 产品定位与竞品对比（内部文档，不进 Git）
 ```
 
 ---
@@ -69,6 +69,7 @@ npm run coverage   # 生成覆盖率报告
 | 类型 | 位置 | 是否进 Git |
 |---|---|---|
 | 图标、运行时静态资源 | `public/` | 是 |
+| 内部文档 `CHANGELOG.md`、`PRODUCT.md` | 仓库根目录 | 否（已列入 `.gitignore`，并已从历史中剔除） |
 | 构建产物 zip | `../assets/releases/` | 否 |
 | 商店截图/宣传图 | `../assets/` | 否 |
 | 收款码等个人素材 | `../assets/` | 否 |
