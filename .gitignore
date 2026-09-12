@@ -4,6 +4,11 @@ coverage/
 
 # docs/ moved to workspace level; see ../docs/
 .DS_Store
+
+# 内部文档，不进 Git
+CHANGELOG.md
+PRODUCT.md
+
 *.log
 .env
 .cache/
